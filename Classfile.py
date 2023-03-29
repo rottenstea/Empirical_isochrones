@@ -7,8 +7,8 @@ from sklearn.svm import SVR
 import numpy as np
 import pandas as pd
 
-
 from Plotting_essentials import CMD_density_design
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import resample
 
@@ -115,6 +115,8 @@ class star_cluster(object):
 
     def create_weights(self, contaminated_idxes, cols: list = None):
 
+        min_max_scaler = MinMaxScaler()
+
         if not cols:
             cols = ["plx", "e_plx"]
 
@@ -129,16 +131,18 @@ class star_cluster(object):
             delta_Mabs = abs_mag_error(CMD_plx, CMD_errors[cols[1]], delta_m).to_numpy()
             delta_cax = cax_error(delta_c1, delta_c2)
 
-            self.weights = 1 / RSS(delta_Mabs, delta_cax)
+            weights = (1 / RSS(delta_Mabs, delta_cax)).reshape(len(delta_cax),1)
 
         except KeyError:
-            print("keyerror")
+            print("!!keyerror, plx errors are missing!!")
 
-            self.weights = 1 / cax_error(delta_c1, delta_c2)
+            weights = (1 / cax_error(delta_c1, delta_c2)).reshape(len(delta_c1),1)
+
+        self.weights = min_max_scaler.fit_transform(weights).reshape(len(weights),)
+
 
     @staticmethod
     def gridsearch_and_ranking(X_train, Y_train, rkf, pg, weight):
-
 
         search = GridSearchCV(estimator=SVR(), param_grid=pg, cv=rkf)
 
@@ -153,19 +157,19 @@ class star_cluster(object):
 
     def SVR_read_from_file(self, HP_file):
         hp_df = pd.read_csv(HP_file)
-        #print("hp_df:", hp_df)
+        # print("hp_df:", hp_df)
 
         filtered_values = np.where(
             (hp_df['name'] == self.name) & (hp_df['abs_mag'] == self.CMD_specs['axes'][0]) &
             (hp_df['cax'] == self.CMD_specs['axes'][1]))[0]
 
-        #print("filtered vals:",filtered_values)
+        # print("filtered vals:",filtered_values)
 
         params = hp_df.loc[filtered_values][['C', 'epsilon', 'gamma', 'kernel']].to_dict(orient="records")[0]
-        #print("params:",params)
+        # print("params:",params)
         return params
 
-    def SVR_Hyperparameter_tuning(self, array, weight_data, grid_dict: dict = None, HP_file=None):
+    def SVR_Hyperparameter_tuning(self, array, weight_data, grid_dict: dict = None, output_file=None):
 
         X_data = array[:, 0].reshape(len(array[:, 0]), 1)
         Y_data = np.stack([array[:, 1], weight_data], axis=1)
@@ -183,27 +187,25 @@ class star_cluster(object):
         Y_err = Y_tr[:, 1].copy(order="C")
 
         # 4. Create parameter grid
+        # Newly tested grid values from the Working_SVR_isochrones.py file
         if grid_dict is None:
-            kernels = ["rbf"]
-            C_range = np.logspace(-1, 2, 20)
-            epsilon_range = np.logspace(-6, 1, 20)
+            evals = np.logspace(-2, -1.5, 20)
+            # gvals = np.logspace(-4, -1, 50)
+            Cvals = np.logspace(-2, 2, 20)
 
-            grid = [
-                dict(kernel=kernels, gamma=["auto"], C=C_range,
-                     epsilon=epsilon_range), ]
-
+            grid = dict(kernel=["rbf"], gamma=["scale"], C=Cvals, epsilon=evals)
         else:
             grid = [grid_dict, ]
 
-        #5. define crossvalidation method
+        # 5. define crossvalidation method
         rkf = RepeatedKFold(n_splits=5, n_repeats=1, random_state=13)
 
         # 5. call the gridsearch function
-        ranking = self.gridsearch_and_ranking(X_train=X_train_scaled, Y_train=Y_flat, rkf = rkf, pg=grid, weight=Y_err)
+        ranking = self.gridsearch_and_ranking(X_train=X_train_scaled, Y_train=Y_flat, rkf=rkf, pg=grid, weight=Y_err)
         print("fin")
 
         # 7. Write output to file
-        if HP_file:
+        if output_file:
             output_data = {"name": self.name, "abs_mag": self.CMD_specs["axes"][0], "cax": self.CMD_specs["axes"][1],
                            "score": ranking.mean_test_score[0], "std": ranking.std_test_score[0]}
             output_data = output_data | ranking.params[0]
@@ -233,7 +235,7 @@ class star_cluster(object):
             params = self.SVR_read_from_file(HP_file=HP_file)
         except IndexError:
             print("Index error")
-            params = self.SVR_Hyperparameter_tuning(array, weight_data, grid, HP_file=HP_file)
+            params = self.SVR_Hyperparameter_tuning(array, weight_data, grid, output_file=HP_file)
 
         svr = SVR(**params)
 
@@ -346,11 +348,9 @@ if __name__ == "__main__":
         isoc = OC.pca.inverse_transform(curv)
         n_boot = 200
 
-
         isochrone_array = np.empty(shape=(len(OC.PCA_XY[:, 0]), 4, n_boot))
         Parallel(n_jobs=6, require="sharedmem")(
             delayed(OC.resample_curves)(OC.PCA_XY, isochrone_array, idx, HP_file) for idx in range(n_boot))
-
 
         f = CMD_density_design(OC.CMD, cluster_obj=OC)
         for i in range(n_boot):
@@ -362,14 +362,13 @@ if __name__ == "__main__":
             plt.plot(isochrone_array[:, 0, i], isochrone_array[:, 1, i], color="orange")
         g.show()
 
-        #fes = OC.isochrone_and_intervals(OC.PCA_XY, n_boot, **kwargs)
+        # fes = OC.isochrone_and_intervals(OC.PCA_XY, n_boot, **kwargs)
 
-        #fig2 = CMD_density_design(OC.CMD, cluster_obj=OC)
+        # fig2 = CMD_density_design(OC.CMD, cluster_obj=OC)
 
+        # plt.plot(fes["l_x"], fes["l_y"], color="grey")
+        # plt.plot(fes["m_x"], fes["m_y"], color="red")
+        # plt.plot(fes["u_x"], fes["u_y"], color="grey")
+        # plt.plot(isoc[:, 0], isoc[:, 1], color="lime")
 
-        #plt.plot(fes["l_x"], fes["l_y"], color="grey")
-        #plt.plot(fes["m_x"], fes["m_y"], color="red")
-        #plt.plot(fes["u_x"], fes["u_y"], color="grey")
-        #plt.plot(isoc[:, 0], isoc[:, 1], color="lime")
-
-        #plt.show()
+        # plt.show()

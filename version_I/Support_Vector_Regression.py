@@ -43,11 +43,22 @@ def SVR_read_from_file(param_file="data/SVR_params/best_params_comp.txt"):
 
 
 def SVR_Hyperparameter_tuning(array, grid_dict: dict = None, output_file=None, further_data: dict = None, weight_data = None):
+
+    #if weight_data is None:
+     #   weight_data = np.ones(len(array[:,0]))
+
     X = array[:, 0].reshape(len(array[:, 0]), 1)
-    Y = array[:, 1]
+
+    Y = np.stack([array[:, 1], weight_data], axis=1)
 
     # 2. Split X and Y into training and test set
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=13)
+
+    Y_flat = Y_train[:, 0].ravel()
+    Y_err = Y_train[:, 1].copy(order="C")
+
+    # 2. Split X and Y into training and test set
+    #X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=13)
 
     # 3. Scale training and test set wrt. to the training set
     X_mean = np.mean(X_train)
@@ -55,7 +66,7 @@ def SVR_Hyperparameter_tuning(array, grid_dict: dict = None, output_file=None, f
     X_train_scaled = (X_train - X_mean) / X_std
     X_test_scaled = (X_test - X_mean) / X_std
     X_scaled = np.array((X - X_mean) / X_std)
-    Y_flat = Y_train.ravel()
+    #Y_flat = Y_train.ravel()
 
     # 4. Define 5-fold cross validation
     rkf = RepeatedKFold(n_splits=5, n_repeats=1, random_state=13)
@@ -76,10 +87,10 @@ def SVR_Hyperparameter_tuning(array, grid_dict: dict = None, output_file=None, f
     else:
         grid = [grid_dict, ]
 
-    Y_flat = Y_train.ravel()
+    #Y_flat = Y_train.ravel()
 
     # 6. call the gridsearch function
-    ranking = gridsearch_and_ranking(X_train_scaled, Y_flat, grid, rkf, weight_data)
+    ranking = gridsearch_and_ranking(X_train_scaled, Y_flat, grid, rkf, weight_data = Y_err)
     # print("fin")
 
     # 7. Write output to file

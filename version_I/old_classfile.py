@@ -13,7 +13,7 @@ class star_cluster:
 
     # UPDATE & RE-DESIGN 09.12.22 ---> works
     def __init__(self, name: str, catalog: pd.DataFrame, CMD_parameters: list = None,
-                sort_idx: int = 1, errors: list = None, index_only: bool = False,
+                 sort_idx: int = 1, errors: list = None, index_only: bool = False,
                  phot_sys=None):
 
         # photometric system option
@@ -42,16 +42,16 @@ class star_cluster:
                 if not index_only:
                     self.BP = self.data.BPmag
                     self.RP = self.data.RPmag
-#                    self.c1 = self.blue - self.G
-#                    self.c2 = self.G - self.red
- #               else:
- #                   self.c1 = None
- #                   self.c2 = None
+                #                    self.c1 = self.blue - self.G
+                #                    self.c2 = self.G - self.red
+                #               else:
+                #                   self.c1 = None
+                #                   self.c2 = None
 
                 # color index options
 
-#                color_dict = {1: self.c1, 2: self.c2, 3: self.c3}
-#                self.cax = color_dict[color_index]
+                #                color_dict = {1: self.c1, 2: self.c2, 3: self.c3}
+                #                self.cax = color_dict[color_index]
 
                 # error options
                 if errors:
@@ -72,14 +72,13 @@ class star_cluster:
                 self.H = self.data.H_mag
                 self.K = self.data.K_mag
 
-
         # color index and abs mag
         if len(CMD_parameters) == 2:
             self.abs_mag_filter, self.cax = self.data[CMD_parameters[0]], self.data[CMD_parameters[1]]
         elif len(CMD_parameters) == 3:
-            abs_mag_filter, cax1, cax2 = self.data[CMD_parameters[0]], self.data[CMD_parameters[1]], self.data[CMD_parameters[2]]
+            abs_mag_filter, cax1, cax2 = self.data[CMD_parameters[0]], self.data[CMD_parameters[1]], self.data[
+                CMD_parameters[2]]
             self.cax = cax1 - cax2
-
 
         # CMD data calculation
         self.distance = 1000 / self.parallax
@@ -109,13 +108,7 @@ class star_cluster:
         self.density_x, self.density_y, self.kwargs_CMD = CMD_density_design([self.CMD[:, 0], self.CMD[:, 1]],
                                                                              density_plot=False)
 
-
-
-
-
-
-
-# moved to Support_Vector_Regression.py (18-1-23)
+    # moved to Support_Vector_Regression.py (18-1-23)
 
     # NOT CHECKED YET
     def SVR_Hyperparameter_tuning(self, file_path: str, PCA: bool = False, pca_array=None, grid_dict: dict = None):
@@ -148,10 +141,10 @@ class star_cluster:
         if grid_dict is None:
             kernels = ["rbf"]
             C_range = np.logspace(-3, 2, 8)
-            gamma_range = ["auto"]#np.logspace(-5, 2, 8)
+            gamma_range = ["auto"]  # np.logspace(-5, 2, 8)
             epsilon_range = np.logspace(-5, -2, 8)
 
-            #svr_grid_rbf = dict(kernel=kernels, gamma=gamma_range, C=C_range)
+            # svr_grid_rbf = dict(kernel=kernels, gamma=gamma_range, C=C_range)
 
             grid = [
                 dict(kernel=kernels, gamma=gamma_range, C=C_range,
@@ -174,6 +167,7 @@ class star_cluster:
 
         # 8. return params for check
         return ranking.params[0]
+
 
 '''
 
