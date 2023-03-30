@@ -1,11 +1,13 @@
 import os
 from datetime import date
+
+import seaborn as sns
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from Classfile import *
-from pre_processing import create_df
+from pre_processing import *
 
+# 0.1 Set the correct output paths
 main = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Isochrone_Archive/Coding/"
 subdir = date.today()
 output_path = os.path.join(main, str(subdir))
@@ -15,77 +17,93 @@ except FileExistsError:
     pass
 output_path = output_path + "/"
 
-# HP check
-HP_file = "data/Hyperparameters/CatalogIII.csv"
+# 0.2 HP file check
+HP_file = "data/Hyperparameters/Archive.csv"
 try:
     pd.read_csv(HP_file)
 except FileNotFoundError:
     with open(HP_file, "w") as f:
         f.write("id,name,abs_mag,cax,score,std,C,epsilon,gamma,kernel\n")
 
-CIII_raw = "data/Cluster_data/all_ages/CatalogIII_DR3_Seb_ages.csv"
 
-CIII_cols = ["cluster_name", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP",
-             "BP-G", "G-RP",
-             "logage_lts", "logage_tdist",
-             "ruwe", "fidelity_v2", "stability", "G_err", "G_BPerr", "G_RPerr"]
+# 0.3 Create the archive from all the loaded data files
+Archive_clusters = np.concatenate([CI_clusters, AOI_clusters, AOII_clusters, CSI_clusters], axis=0)
+Archive_df = pd.concat([CI_df, AOI_df, AOII_df, CSI_df], axis=0)
 
-CIII_names = ["Cluster_id", "plx", "e_plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP",
-              "BP-G", "G-RP",
-              "age_lts", "age_tdist", "ruwe", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr"]
+# 0.4 Set the kwargs for the parameter grid and HP file and plot specs
+kwargs = dict(grid=None, HP_file=HP_file)
+sns.set_style("darkgrid")
 
-q_filter = {"parameter": ["ruwe", "plx", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr"],
-            "limit": ["upper", "lower", "lower", "lower", "upper", "upper", "upper"], "value": [1.4, 0, 0.5, 25, 0.007, 0.15, 0.03]}
+# ----------------------------------------------------------------------------------------------------------------------
+for n, cluster in enumerate(Archive_clusters[:4]):
+
+    # 1. Create a class object for each cluster
+    OC = star_cluster(cluster, Archive_df)
+
+    # 2. Create the CMD that should be used for the isochrone extraction
+    OC.create_CMD(CMD_params=["Gmag", "BPmag", "RPmag"])
+
+    # 3. Do some initial HP tuning if necessary
+    try:
+        params = OC.SVR_read_from_file(HP_file)
+    except IndexError:
+        curve, isochrone = OC.curve_extraction(OC.PCA_XY, **kwargs)
+
+    # 4. Create the robust isochrone and uncertainty border from bootstrapped curves
+    n_boot = 1000
+    result_df = OC.isochrone_and_intervals(n_boot=n_boot, output_loc = "data/Isochrones/", kwargs = kwargs)
+
+    # 5. Plot the result
+    fig = CMD_density_design(OC.CMD, cluster_obj=OC)
+
+    plt.plot(result_df["l_x"], result_df["l_y"], color="grey", label ="5. perc")
+    plt.plot(result_df["m_x"], result_df["m_y"], color="red", label = "Isochrone")
+    plt.plot(result_df["u_x"], result_df["u_y"], color="grey", label = "95. perc")
+
+    plt.show()
+    fig.savefig(output_path+"{0}_{1}.pdf".format(OC.name,OC.CMD_specs["short"]), dpi = 500)
 
 
-CIII_clusters, CIII_df = create_df(CIII_raw, CIII_cols, CIII_names, q_filter)
-
-kernels = ["rbf"]
-C_range = np.logspace(-1, 2, 10)
-gamma_range = np.logspace(-5, -1, 8)
-epsilon_range = np.logspace(-6, 1, 10)
-
-# svr_grid_rbf = dict(kernel=kernels, gamma=gamma_range, C=C_range)
-
-grid = dict(kernel=kernels, gamma=["auto"], C=C_range,
-         epsilon=epsilon_range)
 
 
-kwargs = {"HP_file": HP_file, "grid": None}
+#------------------------------------------------------------------
 
+# CODE SNIPPETS FOR SUMMARY PLOT
 
-for cluster in CIII_clusters[:]:
-    OC = star_cluster(cluster, CIII_df)
+# Fig, axes = plt.subplots(figsize=(12, 23), nrows=10, ncols=7)
+# plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.25, hspace=0.25)
 
-    if OC.Nstars >= 100:
-        OC.create_CMD()
-        #f= CMD_density_design(OC.CMD, cluster_obj=OC)
-        #f.show()
-
-    
-        print(OC.name, min(OC.data["stability"]),max(OC.data["stability"]))
-
-        OC.weights = OC.data["stability"] * OC.weights
-        #print(min(OC.weights))
-
-        curv = OC.curve_extraction(OC.PCA_XY,**kwargs)
-        iso = OC.pca.inverse_transform(curv)
-        #OC.SVR_read_from_file("data/Hyperparameters/CatalogI.csv")
-        #OC.SVR_Hyperparameter_tuning(OC.PCA_XY,OC.weights,output_file="data/Hyperparameters/CatalogI.csv")
-        #OC.SVR_read_from_file("data/Hyperparameters/CatalogI.csv")
-
-        #n_boot = 1000
-        #
-        #fes = OC.isochrone_and_intervals(OC.PCA_XY, n_boot, **kwargs)
-        #
-        kr = int(0.04 * OC.Nstars)
-        fig2 = CMD_density_design(OC.CMD, cluster_obj=OC)
-
-        #plt.plot(fes["l_x"], fes["l_y"], color="grey")
-        #plt.plot(fes["m_x"], fes["m_y"], color="orange")
-        #plt.plot(fes["u_x"], fes["u_y"], color="grey")
-        plt.plot(iso[kr:,0], iso[kr:,1], color= "red", alpha = 0.5)
-
-        plt.show()
-
-        #fig2.savefig(output_path + "{0}_n{1}_final.png".format(OC.name,n_boot), dpi=500)
+# collect isos and OCs for later
+# iso_array = []
+# OCs = []
+#
+# for i, ax in enumerate(axes.flat[:]):
+#     try:
+#
+#         OC = OCs[i]
+#         kr = 0
+#
+#         sns.set_style("darkgrid")
+#
+#         cs = ax.scatter(OC.density_x, OC.density_y, **OC.kwargs_CMD)
+#         ax.plot(iso_array[i][kr:, 0], iso_array[i][kr:, 1], color="red")
+#
+#         # ax.set_title(OC.name.replace("_", " "))
+#         # if i in range(0, 70, 7):
+#         #     ax.set_ylabel(f"absolute {OC.CMD_specs['axes'][0]}")
+#         #
+#         # if i in range(63, 70):
+#         #     ax.set_xlabel(OC.CMD_specs["axes"][1])
+#
+#         ymin, ymax = ax.get_ylim()
+#         ax.set_ylim(ymax, ymin)
+#
+#         plt.colorbar(cs, ax=ax)
+#
+#     except IndexError:
+#         pass
+#
+# plt.subplots_adjust(wspace=0.5, hspace=0.4)
+#
+# Fig.show()
+# Fig.savefig(output_path + "composite_Archive_normweights.pdf", dpi=500)

@@ -143,20 +143,33 @@ def SVR_calculation(SVR_data, SVR_GS_params: list, sample_name: str, SVR_predict
 
 # SVR_PCA_calculation 2-in-1
 
-def SVR_PCA_calculation(input_arr, keys, sample_name, pca_case: bool = False, pca_func=None, svr_predict=None):
+def SVR_PCA_calculation(input_arr, keys, sample_name, pca_case: bool = False, pca_func=None, svr_predict=None, weight = None):
+
     if svr_predict is None:
         svr_predict = input_arr[:, 0].reshape(len(input_arr[:, 0]), 1)
     else:
         svr_predict = svr_predict[:, 0].reshape(len(svr_predict[:, 0]), 1)
 
-    start = keys.index(sample_name)
-    param_str, SVR_score, SVR_std = keys[start + 1], keys[start + 2], keys[start + 3]
-    param_dict = ast.literal_eval(param_str)
+    print("SVR_predict: ",svr_predict[:5,:])
+
+    #start = keys.index(sample_name)
+    #param_str, SVR_score, SVR_std = keys[start + 1], keys[start + 2], keys[start + 3]
+    #param_dict = ast.literal_eval(param_str)
+
+    if weight is None:
+        weight = np.ones(len(input_arr[:,0]))
+
+    print("weight:", weight[:5])
+
+    param_dict = keys
+
+    print("params:",param_dict)
+
     X = input_arr[:, 0].reshape(len(input_arr[:, 0]), 1)
     Y = input_arr[:, 1]
 
     SVR_model_all = SVR(**param_dict)
-    Y_all = SVR_model_all.fit(X, Y).predict(svr_predict)
+    Y_all = SVR_model_all.fit(X, Y, sample_weight=weight).predict(svr_predict)
     # print("SVR Test score:", SVR_model_all.score(svr_predict, Y.ravel()))
 
     SVR_all = np.stack([svr_predict[:, 0], Y_all], 1)

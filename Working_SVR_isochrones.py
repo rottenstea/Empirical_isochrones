@@ -294,7 +294,7 @@ for i, cluster in enumerate(Archive_clusters[:]):
         X = pca_arr[:, 0].reshape(len(pca_arr[:, 0]), 1)
         Y = pca_arr[:, 1]
 
-        Y_all = svr.fit(X, Y).predict(svr_predict)
+        Y_all = svr.fit(X, Y, sample_weight=normalized_weights).predict(svr_predict) #REALLY IMPORTANT EDIT!!
         print("SVR Test score:", svr.score(svr_predict, Y.ravel()))
 
         SVR_all = np.stack([svr_predict[:, 0], Y_all], 1)

@@ -13,25 +13,25 @@ def array_sorting(A: list, index: int = 1):
     return sorted_elements
 
 
-def Isochrone_collection(reference_isochrone, bs_array, n_boot, method_kwargs: dict, pca_case: bool = False):
-    if pca_case:
-        isochrone_store = np.empty(shape=(len(reference_isochrone[:, 0]), 4, n_boot))
-    else:
-        isochrone_store = np.empty(shape=(len(reference_isochrone[:, 0]), 2, n_boot))
+def Isochrone_collection(reference_isochrone, bs_array, n_boot, method_kwargs: dict):#, pca_case: bool = False):
+    #if pca_case:
+    isochrone_store = np.empty(shape=(len(reference_isochrone[:, 0]), 4, n_boot))
+    #else:
+    #isochrone_store = np.empty(shape=(len(reference_isochrone[:, 0]), 2, n_boot))
 
     for i in range(n_boot):
         print("i=", i + 1)
         bs = resample(bs_array, n_samples=(len(reference_isochrone[:, 0])))
-        if pca_case:
-            pca_isos, real_isos = SVR_PCA_calculation(input_arr=bs, **method_kwargs)
-            isochrone_store[:, 0, i] = pca_isos[:, 0]
-            isochrone_store[:, 1, i] = pca_isos[:, 1]
-            isochrone_store[:, 2, i] = real_isos[:, 0]
-            isochrone_store[:, 3, i] = real_isos[:, 1]
-        else:
-            real_isos = SVR_PCA_calculation(input_arr=bs, **method_kwargs)
-            isochrone_store[:, 0, i] = real_isos[:, 0]
-            isochrone_store[:, 1, i] = real_isos[:, 1]
+        #if pca_case:
+        pca_isos, real_isos = SVR_PCA_calculation(input_arr=bs, **method_kwargs)
+        isochrone_store[:, 0, i] = pca_isos[:, 0]
+        isochrone_store[:, 1, i] = pca_isos[:, 1]
+        isochrone_store[:, 2, i] = real_isos[:, 0]
+        isochrone_store[:, 3, i] = real_isos[:, 1]
+        # else:
+        #     real_isos = SVR_PCA_calculation(input_arr=bs, **method_kwargs)
+        #     isochrone_store[:, 0, i] = real_isos[:, 0]
+        #     isochrone_store[:, 1, i] = real_isos[:, 1]
 
     return isochrone_store
 
@@ -68,7 +68,7 @@ def Confidence_interval_stats(reference_isochrone, isochrone_collection, pca_cas
         median_r = pca_func.inverse_transform(m)
         upper_r = pca_func.inverse_transform(u)
 
-        lower, upper, median = array_sorting([lower_r, upper_r, median_r])
+        lower, upper, median = array_sorting([lower_r, upper_r, median_r], 0)
         return lower, upper, median
 
     else:
