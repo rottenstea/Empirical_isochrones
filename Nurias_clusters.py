@@ -1,13 +1,14 @@
 import os
 from datetime import date
-
-from pre_processing import *
-from version_I.old_classfile import *
+from Classfile import *
+from pre_processing import case_study_names, case_study_dfs
 import seaborn as sns
 import matplotlib.pyplot as plt
-from version_I.Support_Vector_Regression import *
 
-from sklearn.decomposition import PCA
+"""
+This is a file that plays around with the cluster selection of Nuria. It is fully functional, but holds only one of
+the different plot combinations that I have since tried with the panSTARRs and 2MASS data.
+"""
 
 # output paths
 main = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Isochrone_Archive/Coding/"
@@ -19,113 +20,136 @@ except FileExistsError:
     pass
 output_path = output_path + "/"
 
-
-
-# Hyperparameter path
-hypers = os.path.join(output_path, "hyperparams")
+HP_file = "data/Hyperparameters/Case_studies_with_errors.csv"
 try:
-    os.mkdir(hypers)
-except FileExistsError:
-    pass
-hypers = hypers + "/"
-preprocess = False
+    pd.read_csv(HP_file)
+except FileNotFoundError:
+    with open(HP_file, "w") as f:
+        f.write("id,name,abs_mag,cax,score,std,C,epsilon,gamma,kernel\n")
+
 # ----------------------------------------------------------------------------------------------------------------------
-Pleiades = "data/Cluster_data_raw/Pleiades_w_plx.csv"
-
-df_columns = ["Cluster", "plx", "umag", "gmag", "rmag", "imag", "Ymag", "Jmag", "Hmag", "Kmag"]
-
-new_colnames = ["Cluster_id", "plx", "umag", "gmag", "rmag", "imag", "Ymag", "Jmag", "Hmag", "Kmag"]
-
-Pleiades_cluster, Pleiades_df = create_df(Pleiades, columns=df_columns, names=new_colnames)
+Pleiades_cluster, Pleiades_df = case_study_names[0], case_study_dfs[0]
 
 Pleiades_filtered_df = Pleiades_df[Pleiades_df["imag"] > 13]
 # ----------------------------------------------------------------------------------------------------------------------
 J, H, K = np.genfromtxt("data/PARSEC_isochrones/Nuria_clusters/2MASS_30Myr.txt", usecols=(-3, -2, -1), unpack=True)
 i = np.genfromtxt("data/PARSEC_isochrones/Nuria_clusters/panSTARRs1_30Myr.txt", usecols=(-4))
 
-IC4665 = "data/Cluster_data_raw/IC_4665_w_plx.csv"
+IC4665_cluster, IC4665_df = case_study_names[1], case_study_dfs[1]
 
-df_columns = ["Cluster", "median_plx", "g", "r", "i", "z", "y", "J", "H", "K"]
+IC4665_filtered_df = IC4665_df[(IC4665_df["imag"] > 13)]
 
-new_colnames = ["Cluster_id", "plx", "gmag", "rmag", "imag", "zmag", "Ymag", "Jmag", "Hmag", "Kmag"]
-
-IC4665_cluster, IC4665_df = create_df(IC4665, columns=df_columns, names=new_colnames)
-
-IC4665_filtered_df = IC4665_df[(IC4665_df["imag"] > 13) & (IC4665_df["imag"] < 99) & (IC4665_df["Kmag"] < 99)]
-
-N_clusters = np.concatenate([IC4665_cluster, Pleiades_cluster])
-N_df = pd.concat([IC4665_filtered_df, Pleiades_filtered_df], axis=0)
+N_df = pd.concat([Pleiades_filtered_df, IC4665_filtered_df], axis=0)
 # ----------------------------------------------------------------------------------------------------------------------
 sns.set_style("darkgrid")
 colors = ["red", "darkorange"]
+kwargs = dict(grid=None, HP_file=HP_file)
+save_plot = True
 
-params1 = {'C': 100.0, 'epsilon': 0.01353876180022544, 'gamma': 'scale', 'kernel': 'rbf'}
-params2 = {'C': 37.92690190732246, 'epsilon': 0.03162277660168379, 'gamma': 'scale', 'kernel': 'rbf'}
-params = [params1, params2]
-
-fig1 = plt.figure(figsize=(4, 6))
+fig = plt.figure(figsize=(4, 6))
 ax = plt.subplot2grid((1, 1), (0, 0))
 
-for i, cluster in enumerate(N_clusters[:]):
-    OC = star_cluster(cluster, N_df, CMD_parameters=["imag", "imag", "Kmag"])
-    h = CMD_density_design([OC.CMD[:, 0], OC.CMD[:, 1]], title=OC.name)
-    h.show()
+cm = plt.cm.get_cmap("crest")
 
-    OC.kwargs_CMD["s"] = 50
+for i, cluster in enumerate(case_study_names[:]):
 
-    pca = PCA(n_components=2)
-    pca_arr = pca.fit_transform(OC.CMD)
+    OC = star_cluster(cluster, N_df)
+    deltas = OC.create_CMD(CMD_params=["imag", "imag", "Kmag"], return_errors=True)
 
-    evals = np.logspace(-2, -1.5, 20)
-    # gvals = np.logspace(-4, -1, 50)
-    Cvals = np.logspace(-2, 2, 20)
+    # 3. Do some initial HP tuning if necessary
+    try:
+        params = OC.SVR_read_from_file(HP_file)
+    except IndexError:
+        curve, isochrone = OC.curve_extraction(OC.PCA_XY, **kwargs)
 
-    param_grid = dict(kernel=["rbf"], gamma=["scale"], C=Cvals,
-                      epsilon=evals)
+    # 4. Create the robust isochrone and uncertainty border from bootstrapped curves
+    n_boot = 1000
+    result_df = OC.isochrone_and_intervals(n_boot=n_boot, output_loc="data/Isochrones/", kwargs=kwargs)
 
-    # params = SVR_Hyperparameter_tuning(pca_arr, param_grid)
-    # params = {'C': 37.92690190732246, 'epsilon': 0.03162277660168379, 'gamma': 'scale', 'kernel': 'rbf'}   #i-k band
-    # {'C': 0.29763514416313175, 'epsilon': 0.03162277660168379, 'gamma': 'scale', 'kernel': 'rbf'}        # J-K band
+    # 5. Plot the result
+    fig1 = plt.figure(figsize=(4, 6))
+    ax1 = plt.subplot2grid((1, 1), (0, 0))
 
-    svr = SVR(**params[i])
+    sc = ax1.scatter(OC.CMD[:, 0], OC.CMD[:, 1], label=OC.name, c=OC.weights, cmap=cm, s=20)
+    ax1.plot(result_df["l_x"], result_df["l_y"], color="grey", label="5. perc")
+    ax1.plot(result_df["m_x"], result_df["m_y"], color="red", label="Isochrone")
+    ax1.plot(result_df["u_x"], result_df["u_y"], color="grey", label="95. perc")
+    plt.colorbar(sc)
+    ymin, ymax = ax1.get_ylim()
+    ax1.set_ylim(ymax, ymin)
+    ax1.set_ylabel(OC.CMD_specs["axes"][0])
+    ax1.set_xlabel(OC.CMD_specs["axes"][1])
+    ax1.set_title(OC.name)
 
-    svr_predict = pca_arr[:, 0].reshape(len(pca_arr[:, 0]), 1)
+    fig1.show()
+    if save_plot:
+        fig1.savefig(output_path+"{}_isochrone_errormap.png".format(OC.name),dpi=500)
 
-    X = pca_arr[:, 0].reshape(len(pca_arr[:, 0]), 1)
-    Y = pca_arr[:, 1]
+    error_fig = plt.figure()
 
-    Y_all = svr.fit(X, Y).predict(svr_predict)
-    print("SVR Test score:", svr.score(svr_predict, Y.ravel()))
+    ax1 = plt.subplot2grid((2, 2), (0, 0))
+    ax2 = plt.subplot2grid((2, 2), (0, 1))
+    ax3 = plt.subplot2grid((2, 2), (1, 0))
+    ax4 = plt.subplot2grid((2, 2), (1, 1))
 
-    SVR_all = np.stack([svr_predict[:, 0], Y_all], 1)
-    SVR_all = SVR_all[SVR_all[:, 0].argsort()]
-    rev_transform = pca.inverse_transform(SVR_all)
-    kr = 0
+    s1 = ax1.scatter(OC.CMD[:, 0], OC.CMD[:, 1], label=OC.name, c=deltas[0], cmap=cm, marker=".", s=5)
+    ax1.set_title("imag error (cax)")
+    plt.colorbar(s1, ax=ax1)
+    ymin, ymax = ax1.get_ylim()
+    ax1.set_ylim(ymax, ymin)
+    ax1.set_ylabel(OC.CMD_specs["axes"][0])
+    ax1.set_xlabel(OC.CMD_specs["axes"][1])
+
+    s2 = ax2.scatter(OC.CMD[:, 0], OC.CMD[:, 1], label=OC.name, c=deltas[1], cmap=cm, marker=".", s=5)
+    ax2.set_title("Kmag error (cax)")
+    plt.colorbar(s2, ax=ax2)
+    ymin, ymax = ax2.get_ylim()
+    ax2.set_ylim(ymax, ymin)
+    ax2.set_ylabel(OC.CMD_specs["axes"][0])
+    ax2.set_xlabel(OC.CMD_specs["axes"][1])
+
+    cax_error = np.sqrt(deltas[0] ** 2 + deltas[1] ** 2)
+    s3 = ax3.scatter(OC.CMD[:, 0], OC.CMD[:, 1], label=OC.name, c=cax_error, cmap=cm, marker=".", s=5)
+    ax3.set_title("cax errors")
+    plt.colorbar(s3, ax=ax3)
+    ymin, ymax = ax3.get_ylim()
+    ax3.set_ylim(ymax, ymin)
+    ax3.set_ylabel(OC.CMD_specs["axes"][0])
+    ax3.set_xlabel(OC.CMD_specs["axes"][1])
+
+    s4 = ax4.scatter(OC.CMD[:, 0], OC.CMD[:, 1], label=OC.name, c=OC.weights, cmap=cm, marker=".", s=5)
+    ax4.set_title("weights")
+    plt.colorbar(s4, ax=ax4)
+    ymin, ymax = ax4.get_ylim()
+    ax4.set_ylim(ymax, ymin)
+    ax4.set_ylabel(OC.CMD_specs["axes"][0])
+    ax4.set_xlabel(OC.CMD_specs["axes"][1])
+
+    plt.subplots_adjust(hspace=0.4, wspace=0.3)
+
+    error_fig.show()
+
+    if save_plot:
+        error_fig.savefig(output_path+"{}_errorplot.png".format(OC.name), dpi=500)
 
     if i == 0:
         ax.scatter(OC.density_x, OC.density_y, label="IC_4665 data", **OC.kwargs_CMD)
     elif i == 1:
         OC_density_x, OC_density_y, OC_kwargs = CMD_density_design([OC.CMD[:, 0], OC.CMD[:, 1]],
-                                                                   to_RBG=[0.27, 0.27, 0.27],
-                                                                   from_RBG=[0.74, 0.74, 0.74], density_plot=False)
+                                                                   to_RBG=[0.06, 0.55, 0.44],
+                                                                   from_RBG=[0.13, 0.75, 0.62], density_plot=False)
         ax.scatter(OC_density_x, OC_density_y, label="Pleiades data", **OC_kwargs)
-    ax.plot(rev_transform[kr:, 0], rev_transform[kr:, 1], color=colors[i], label="{}".format(OC.name))
-    # ax2.set_ylabel(r"M$_{\rm G}$")
+    ax.plot(result_df["l_x"], result_df["l_y"], color="grey", label="5. perc", alpha=0.7)
+    ax.plot(result_df["m_x"], result_df["m_y"], color=colors[i], label="Isochrone")
+    ax.plot(result_df["u_x"], result_df["u_y"], color="grey", label="95. perc", alpha=0.7)
 
 ymin, ymax = ax.get_ylim()
 ax.set_ylim(ymax, ymin)
-
 ax.set_ylabel(r"abs mag i")
-
 ax.set_xlabel(r"${\rm i}$ - ${\rm K}$")
-# ax2.legend(loc="best", fontsize=16)
-ax.set_title("Empirical isochrones")  # , y=0.97)
-# a = 100
-# plt.plot(i[:a] - K[:a], i[:a], color="orange", label = "PARSEC")
+ax.set_title("Empirical isochrones")
+fig.show()
 
-plt.legend(bbox_to_anchor=(1, 1), loc="upper right")
-
-fig1.show()
-fig1.savefig(output_path + "Comparison_Pleiades_IC4665_data"
-                           ".png", dpi=500)
+if save_plot:
+    fig.savefig(output_path + "Comparison_Pleiades_IC4665_data.png", dpi=500)
 

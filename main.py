@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from Classfile import *
-from pre_processing import *
+from pre_processing import cluster_df_list, cluster_name_list
 
 # 0.1 Set the correct output paths
 main = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Isochrone_Archive/Coding/"
@@ -18,7 +18,7 @@ except FileExistsError:
 output_path = output_path + "/"
 
 # 0.2 HP file check
-HP_file = "data/Hyperparameters/Archive.csv"
+HP_file = "data/Hyperparameters/CatalogII.csv"
 try:
     pd.read_csv(HP_file)
 except FileNotFoundError:
@@ -27,18 +27,23 @@ except FileNotFoundError:
 
 
 # 0.3 Create the archive from all the loaded data files
-Archive_clusters = np.concatenate([CI_clusters, AOI_clusters, AOII_clusters, CSI_clusters], axis=0)
-Archive_df = pd.concat([CI_df, AOI_df, AOII_df, CSI_df], axis=0)
+Archive_clusters = np.concatenate(cluster_name_list, axis=0)
+Archive_df = pd.concat(cluster_df_list, axis=0)
 
 # 0.4 Set the kwargs for the parameter grid and HP file and plot specs
 kwargs = dict(grid=None, HP_file=HP_file)
 sns.set_style("darkgrid")
+save_plot = True
 
 # ----------------------------------------------------------------------------------------------------------------------
-for n, cluster in enumerate(Archive_clusters[:4]):
+
+# closer look at CII
+CII_df = cluster_df_list[1]
+CII_clusters = cluster_name_list[1]
+for n, cluster in enumerate(CII_clusters[:]):
 
     # 1. Create a class object for each cluster
-    OC = star_cluster(cluster, Archive_df)
+    OC = star_cluster(cluster, CII_df)
 
     # 2. Create the CMD that should be used for the isochrone extraction
     OC.create_CMD(CMD_params=["Gmag", "BPmag", "RPmag"])
@@ -61,7 +66,8 @@ for n, cluster in enumerate(Archive_clusters[:4]):
     plt.plot(result_df["u_x"], result_df["u_y"], color="grey", label = "95. perc")
 
     plt.show()
-    fig.savefig(output_path+"{0}_{1}.pdf".format(OC.name,OC.CMD_specs["short"]), dpi = 500)
+    if save_plot:
+        fig.savefig(output_path+"{0}_{1}.pdf".format(OC.name,OC.CMD_specs["short"]), dpi = 500)
 
 
 

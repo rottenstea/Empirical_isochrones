@@ -43,7 +43,7 @@ class star_cluster(object):
         self.data = catalog[catalog.Cluster_id == name]
 
         # Step 3: Global cluster properties do not change with changing CMDs
-        self.Catalog = None
+        # self.catalog = None
         self.distance = 1000 / self.data.plx
         self.Nstars = len(self.data)
 
@@ -70,7 +70,8 @@ class star_cluster(object):
         self.PCA_XY = None
         self.pca = None
 
-    def create_CMD(self, CMD_params: list = None):  # --> works in main
+
+    def create_CMD(self, CMD_params: list = None, return_errors: bool = False):  # --> works in main
 
         if not CMD_params:
             self.CMD_specs = dict(axes=["Gmag", "BP-RP"], filters=["Gmag", "BPmag", "RPmag"], short="G_BPRP")
@@ -111,14 +112,19 @@ class star_cluster(object):
         self.pca = PCA(n_components=2)
         self.PCA_XY = self.pca.fit_transform(sorted_arr)
 
-        # weights
-        self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes)
-
         # Plotting variables
         self.density_x, self.density_y, self.kwargs_CMD = CMD_density_design([self.CMD[:, 0], self.CMD[:, 1]],
                                                                              density_plot=False)
 
-    def create_weights(self, sorting_ids: np.ndarray, nan_ids: np.ndarray, cols: list = None):  # --> works in main
+        # weights
+        if not return_errors:
+            self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes)
+        else:
+            errors = self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes, return_deltas=return_errors)
+            return errors
+
+    def create_weights(self, sorting_ids: np.ndarray, nan_ids: np.ndarray, cols: list = None,
+                       return_deltas: bool = False):  # --> works in main
 
         min_max_scaler = MinMaxScaler()
 
@@ -145,11 +151,18 @@ class star_cluster(object):
             weights = (1 / RSS(delta_Mabs, delta_cax)).reshape(len(delta_cax), 1)
 
         except KeyError:
-            print("!!keyerror, plx errors are missing!!")
+            print("Keyerror, plx errors are missing!!")
 
             weights = (1 / cax_error(delta_c1, delta_c2)).reshape(len(delta_c1), 1)
 
-        self.weights = min_max_scaler.fit_transform(weights).reshape(len(weights), )
+        if all(weights >= 0):
+            self.weights = min_max_scaler.fit_transform(weights).reshape(len(weights), )
+        else:
+            self.weights = np.ones(len(weights))
+            print("No errors found for the CMD data. Setting weight array to unity.")
+
+        if return_deltas:
+            return [delta_c1, delta_c2, delta_m]
 
     @staticmethod
     def gridsearch_and_ranking(X_train: np.ndarray, Y_train: np.ndarray, grid: dict,
@@ -233,7 +246,7 @@ class star_cluster(object):
 
     def curve_extraction(self, svr_data: np.ndarray, HP_file: str, svr_predict: np.ndarray = None,
                          svr_weights: np.ndarray = None,
-                         grid: dict = None):  # --> works in main
+                         grid: dict = None, always_tune: bool = False):  # --> works in main
 
         # 1. Define the array which is used as base for the prediction of the curve
         # If the svr_data is an array of bootstrapped values, the prediction still needs to be performed on the
@@ -252,11 +265,16 @@ class star_cluster(object):
                 svr_weights = np.ones(len(svr_data[:, 1]))
 
         # 3. Either read in the SVR parameters from the HP file, or determine them by tuning first
-        try:
-            params = self.SVR_read_from_file(file=HP_file)
-        except IndexError:
-            print("Index error: Running HP tuning for {}...".format(self.name))
-            params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights, output_file=HP_file,
+        if not always_tune:
+            try:
+                params = self.SVR_read_from_file(file=HP_file)
+            except IndexError:
+                print("Index error: Running HP tuning for {}...".format(self.name))
+                params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights,
+                                                        output_file=HP_file,
+                                                        grid=grid)
+        else:
+            params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights, output_file=None,
                                                     grid=grid)
 
         # 4. Define the two coordinates for SVR and fit-predict the tuned model to them
@@ -275,9 +293,9 @@ class star_cluster(object):
                         sampling_weights: np.ndarray = None, kwargs: dict = None):
 
         # 0. If no sampling array or weights are given, use the cluster attributes PCA_XY and weights
-        if not sampling_array:
+        if sampling_array is None:
             sampling_array = self.PCA_XY
-        if not sampling_weights:
+        if sampling_weights is None:
             sampling_weights = self.weights
 
         # 1. Stack the XY array and the weights to allow for joint resampling
@@ -285,7 +303,7 @@ class star_cluster(object):
         bs = resample(XY_weights_stack)
 
         # 2. Split up the resampled array again and calculate the (PCA) isochrone from the resampled data
-        bs_XY, bs_weights = bs[:, :2].copy(order="C") , bs[:, 2].copy(order="C")
+        bs_XY, bs_weights = bs[:, :2].copy(order="C"), bs[:, 2].copy(order="C")
         curve, isochrone = self.curve_extraction(svr_data=bs_XY, svr_weights=bs_weights, svr_predict=sampling_array,
                                                  **kwargs)
 
@@ -306,7 +324,8 @@ class star_cluster(object):
         tic = time.time()
         Parallel(n_jobs=njobs, require="sharedmem")(
             delayed(self.resample_curves)(idx, output=isochrone_array, sampling_array=sampling_array,
-                                          sampling_weights=sampling_weights, kwargs=kwargs) for idx in range(n_resample))
+                                          sampling_weights=sampling_weights, kwargs=kwargs) for idx in
+            range(n_resample))
         toc = time.time()
         print(toc - tic, "s parallel")
 
@@ -331,7 +350,7 @@ class star_cluster(object):
                                 parallel_jobs: int = None, output_loc: str = None, kwargs: dict = None):
 
         # 0. Define x_array for the stacking and reverse transformation
-        if not data:
+        if data is None:
             x_array = self.PCA_XY[:, 0]
         else:
             x_array = data[:, 0]
@@ -356,70 +375,63 @@ class star_cluster(object):
         sorted_df = pd.DataFrame(data=sorted_array, columns=new_cols)
 
         if output_loc:
-            output_file = "{0}_{1}_nboot_{2}.csv".format(self.name, self.CMD_specs["short"],n_boot)
+            output_file = "{0}_{1}_nboot_{2}.csv".format(self.name, self.CMD_specs["short"], n_boot)
             sorted_df.to_csv(output_loc + output_file, mode="w", header=True)
 
         return sorted_df
 
+# WORKS and is UPTODATE 3-4-23
+# ============================
+
 # if __name__ == "__main__":
 #     import matplotlib.pyplot as plt
-#     from pre_processing import create_df
+#     from pre_processing import cluster_df_list, cluster_name_list
 #
-#     CI_raw = "data/Cluster_data/all_ages/CatalogI_BCD_ages.csv"
+#     CI_clusters, CI_df = cluster_name_list[0], cluster_df_list[0]
 #
-#     CI_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP", "BP-G",
-#                "G-RP",
-#                "logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D",
-#                "RUWE", "Proba"]
+#     HPfile = "data/Hyperparameters/CatalogI.csv"
+#     try:
+#         pd.read_csv(HPfile)
+#     except FileNotFoundError:
+#         with open(HPfile, "w") as f:
+#             f.write("id,name,abs_mag,cax,score,std,C,epsilon,gamma,kernel\n")
 #
-#     CI_names = ["Cluster_id", "plx", "e_plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP",
-#                 "BP-G", "G-RP", "age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "probability"]
+#     HP_kwargs = {"HP_file": HPfile, "grid": None}
 #
-#     q_filter = {"parameter": ["ruwe", "plx", "probability"], "limit": ["upper", "lower", "lower"],
-#                 "value": [1.4, 0, 0.49]}
-#
-#     CI_clusters, CI_df = create_df(CI_raw, CI_cols, CI_names, q_filter)
-#     #
-#     #     HP_file = "data/Hyperparameters/CatalogI.csv"
-#     #     try:
-#     #         pd.read_csv(HP_file)
-#     #     except FileNotFoundError:
-#     #         with open(HP_file, "w") as f:
-#     #             f.write("id,name,abs_mag,cax,score,std,C,epsilon,gamma,kernel\n")
-#     #
-#     #     kwargs = {"HP_file": HP_file, "grid": None}
-#     #
 #     for cluster in CI_clusters[:3]:
 #         OC = star_cluster(cluster, CI_df)
 #         OC.create_CMD()
 #         print(OC.name)
-# #
-#         OC.weights = np.ones(shape=(len(OC.PCA_XY[:, 1])))
-#         curv = OC.curve_extraction(OC.PCA_XY, **kwargs)
-#         isoc = OC.pca.inverse_transform(curv)
-#         n_boot = 200
 #
-#         isochrone_array = np.empty(shape=(len(OC.PCA_XY[:, 0]), 4, n_boot))
+#         try:
+#             HP_params = OC.SVR_read_from_file(HPfile)
+#         except IndexError:
+#             c, i = OC.curve_extraction(OC.PCA_XY, **HP_kwargs)
+#
+#         # manual bootstrapping, not using master function
+#         nboot = 100
+#         isochrone_arr = np.empty(shape=(len(OC.PCA_XY[:, 0]), 4, nboot))
 #         Parallel(n_jobs=6, require="sharedmem")(
-#             delayed(OC.resample_curves)(OC.PCA_XY, isochrone_array, idx, HP_file) for idx in range(n_boot))
+#             delayed(OC.resample_curves)(idx=idx, output=isochrone_arr, kwargs=HP_kwargs) for
+#             idx in range(nboot))
 #
 #         f = CMD_density_design(OC.CMD, cluster_obj=OC)
-#         for i in range(n_boot):
-#             plt.plot(isochrone_array[:, 2, i], isochrone_array[:, 3, i], color="orange")
+#         for i in range(nboot):
+#             plt.plot(isochrone_arr[:, 2, i], isochrone_arr[:, 3, i], color="orange")
 #         f.show()
 #
 #         g = CMD_density_design(OC.PCA_XY, cluster_obj=OC)
-#         for i in range(n_boot):
-#             plt.plot(isochrone_array[:, 0, i], isochrone_array[:, 1, i], color="orange")
+#         for i in range(nboot):
+#             plt.plot(isochrone_arr[:, 0, i], isochrone_arr[:, 1, i], color="orange")
 #         g.show()
 #
-#         # fes = OC.isochrone_and_intervals(OC.PCA_XY, n_boot, **kwargs)
+#         fes = OC.isochrone_and_intervals(n_boot=nboot, data=OC.PCA_XY, weights=OC.weights,
+#                                          parallel_jobs=6, kwargs=HP_kwargs)
 #
-#         # fig2 = CMD_density_design(OC.CMD, cluster_obj=OC)
+#         fig2 = CMD_density_design(OC.CMD, cluster_obj=OC)
 #
-#         # plt.plot(fes["l_x"], fes["l_y"], color="grey")
-#         # plt.plot(fes["m_x"], fes["m_y"], color="red")
-#         # plt.plot(fes["u_x"], fes["u_y"], color="grey")
-#         # plt.plot(isoc[:, 0], isoc[:, 1], color="lime")
+#         plt.plot(fes["l_x"], fes["l_y"], color="grey")
+#         plt.plot(fes["m_x"], fes["m_y"], color="red")
+#         plt.plot(fes["u_x"], fes["u_y"], color="grey")
 #
-#         # plt.show()
+#         plt.show()
