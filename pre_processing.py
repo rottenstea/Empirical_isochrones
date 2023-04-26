@@ -9,6 +9,7 @@ that they may just be imported into the various python scripts by their variable
 
 data_path = "/Users/alena/PycharmProjects/PaperI/"
 
+
 def create_df(filepath, columns, names, quality_filter: dict = None):
     raw_df = pd.read_csv(filepath)
 
@@ -52,19 +53,29 @@ cluster_name_list = []
 CI_raw = data_path + "data/Cluster_data/all_ages/CatalogI_BCD_ages.csv"
 
 CI_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "Proba", "X", "Y", "Z",
-                           "N"]
+                           "N", "Plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
 
 CI_names = standard_names + ["age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "probability", "x", "y", "z",
-                             "Nstars"]
+                             "Nstars", "plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
 
-q_filter = {"parameter": ["ruwe", "plx", "probability"], "limit": ["upper", "lower", "lower"], "value": [1.4, 0, 0.49]}
+q_filter_I = {"parameter": ["ruwe", "plx", "probability"], "limit": ["upper", "lower", "lower"],
+              "value": [1.4, 0, 0.49]}
 
-CI_clusters, CI_df = create_df(CI_raw, CI_cols, CI_names, q_filter)
+CI_clusters, CI_df = create_df(CI_raw, CI_cols, CI_names, q_filter_I)
 CI_df["catalog"] = 1
-CI_df["ref_age"] = CI_df["age_C"]
+CI_df["ref_age"] = np.where(~CI_df['age_C'].isna(), CI_df['age_C'],
+                            np.where(~CI_df['age_D'].isna(), CI_df['age_D'], CI_df['age_B']))
+
+# print the dataframe
+
+CI_df = CI_df[(CI_df["Cluster_id"] != "IC_348") &
+              (CI_df["Cluster_id"] != "L_1641S") &
+              (CI_df["Cluster_id"] != "RSG_7")]
+
+CI_clusters_new = CI_df["Cluster_id"].unique()
 
 cluster_df_list.append(CI_df)
-cluster_name_list.append(CI_clusters)
+cluster_name_list.append(CI_clusters_new)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # M 2020 Xmatch Gaia EDR3 + errors == CATALOG II
@@ -76,9 +87,10 @@ CII_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D",
 
 CII_names = standard_names + ["age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "x", "y", "z"]
 
-q_filter = standard_filter
+CII_clusters, CII_df = create_df(CII_raw, CII_cols, CII_names, standard_filter)
 
-CII_clusters, CII_df = create_df(CII_raw, CII_cols, CII_names, q_filter)
+value_counts = CII_df['Cluster_id'].value_counts()
+CII_df['Nstars'] = CII_df['Cluster_id'].map(value_counts)
 
 CII_df["catalog"] = 2
 CII_df["ref_age"] = CII_df["age_C"]
@@ -90,38 +102,48 @@ cluster_name_list.append(CII_clusters)
 # new catalogue from Sebastian == CATALOG III
 # ----------------------------------------------------------------------------------------------------------------------
 
-CIII_raw = data_path + "data/Cluster_data/all_ages/CatalogIII_DR3_Seb_ages.csv"
+CIII_raw = data_path + "data/Cluster_data/all_ages/CatalogIII_DR3_Sco-Cen-ages-names_ages.csv"
 
 CIII_cols = standard_cols + ["logage_lts", "logage_tdist", "ruwe", "fidelity_v2", "stability", "G_err", "G_BPerr",
-                             "G_RPerr"]
+                             "G_RPerr", "X", "Y", "Z", "plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
 
-CIII_names = standard_names + ["age_lts", "age_tdist", "ruwe", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr"]
+CIII_names = standard_names + ["age_lts", "age_tdist", "ruwe", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr",
+                               "x", "y", "z", "plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
 
-q_filter = {"parameter": ["ruwe", "plx", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr"],
-            "limit": ["upper", "lower", "lower", "lower", "upper", "upper", "upper"],
-            "value": [1.4, 0, 0.5, 6, 0.007, 0.05, 0.03]}
+q_filter_III = {"parameter": ["ruwe", "plx", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr"],
+                "limit": ["upper", "lower", "lower", "lower", "upper", "upper", "upper"],
+                "value": [1.4, 0, 0.5, 6, 0.007, 0.05, 0.03]}
 
-CIII_clusters, CIII_df = create_df(CIII_raw, CIII_cols, CIII_names, q_filter)
+CIII_clusters, CIII_df = create_df(CIII_raw, CIII_cols, CIII_names, q_filter_III)
+
+value_counts = CIII_df['Cluster_id'].value_counts()
+CIII_df['Nstars'] = CIII_df['Cluster_id'].map(value_counts)
+CIII_df = CIII_df[CIII_df["Nstars"] >= 100]
 
 CIII_df["catalog"] = 3
-CIII_df["ref_age"] = CIII_df["age_tdist"]
+CIII_df["ref_age"] = round(CIII_df["age_tdist"], 2)
 
+CIII_df = CIII_df[(CIII_df["Cluster_id"] != "rho Oph/L1688") & (CIII_df["Cluster_id"] != "Lupus 1-4")]
+
+CIII_clusters_new = CIII_df["Cluster_id"].unique()
+
+cluster_df_list.append(CIII_df)
+cluster_name_list.append(CIII_clusters_new)
 # ----------------------------------------------------------------------------------------------------------------------
 # Coma Ber (Melotte 111) == ADD-ON I
 # ----------------------------------------------------------------------------------------------------------------------
 
 AOI_raw = data_path + "data/Cluster_data/all_ages/Coma_Ber_CD_ages.csv"
 
-AOI_cols = standard_cols + ["AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE"]
+AOI_cols = standard_cols + ["AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "X", "Y", "Z"]
 
-AOI_names = standard_names + ["age_C", "av_C", "age_D", "av_D", "ruwe"]
+AOI_names = standard_names + ["age_C", "av_C", "age_D", "av_D", "ruwe", "x", "y", "z"]
 
-q_filter = standard_filter
-
-AOI_clusters, AOI_df = create_df(AOI_raw, AOI_cols, AOI_names, q_filter)
+AOI_clusters, AOI_df = create_df(AOI_raw, AOI_cols, AOI_names, standard_filter)
 
 AOI_df["catalog"] = 4
 AOI_df["ref_age"] = AOI_df["age_C"]
+AOI_df["Nstars"] = len(AOI_df["age_C"])
 
 cluster_df_list.append(AOI_df)
 cluster_name_list.append(AOI_clusters)
@@ -132,16 +154,15 @@ cluster_name_list.append(AOI_clusters)
 
 AOII_raw = data_path + "data/Cluster_data/all_ages/Hyades_CD_ages.csv"
 
-AOII_cols = standard_cols + ["AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE"]
+AOII_cols = standard_cols + ["AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "x", "y", "z"]
 
-AOII_names = standard_names + ["age_C", "av_C", "age_D", "av_D", "ruwe"]
+AOII_names = standard_names + ["age_C", "av_C", "age_D", "av_D", "ruwe", "x", "y", "z"]
 
-q_filter = standard_filter
-
-AOII_clusters, AOII_df = create_df(AOII_raw, AOII_cols, AOII_names, q_filter)
+AOII_clusters, AOII_df = create_df(AOII_raw, AOII_cols, AOII_names, standard_filter)
 
 AOII_df["catalog"] = 5
 AOII_df["ref_age"] = AOII_df["age_C"]
+AOII_df["Nstars"] = len(AOII_df["age_C"])
 
 cluster_df_list.append(AOII_df)
 cluster_name_list.append(AOII_clusters)
@@ -152,16 +173,15 @@ cluster_name_list.append(AOII_clusters)
 
 AOIII_raw = data_path + "data/Cluster_data/all_ages/Meingast1_stab_24_CuESSIV_ages.csv"
 
-AOIII_cols = standard_cols + ["logage_Curtis", "logage_ESSIV", "RUWE", "Stab"]
+AOIII_cols = standard_cols + ["logage_Curtis", "logage_ESSIV", "RUWE", "Stab", "X", "Y", "Z"]
 
-AOIII_names = standard_names + ["age_Cu", "age_ESSIV", "ruwe", "stability"]
+AOIII_names = standard_names + ["age_Cu", "age_ESSIV", "ruwe", "stability", "x", "y", "z"]
 
-q_filter = standard_filter
-
-AOIII_clusters, AOIII_df = create_df(AOIII_raw, AOIII_cols, AOIII_names, q_filter)
+AOIII_clusters, AOIII_df = create_df(AOIII_raw, AOIII_cols, AOIII_names, standard_filter)
 
 AOIII_df["catalog"] = 5
 AOIII_df["ref_age"] = AOIII_df["age_Cu"]
+AOIII_df["Nstars"] = len(AOIII_df["age_Cu"])
 
 cluster_df_list.append(AOIII_df)
 cluster_name_list.append(AOIII_clusters)
@@ -188,9 +208,10 @@ CSII_names = ["Cluster_id", "plx", "umag", "e_umag", "gmag", "e_gmag", "rmag", "
               "e_zmag", "ymag", "e_ymag", "Jmag", "e_Jmag", "Hmag", "e_Hmag", "Kmag", "e_Kmag",
               "age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "probability"]
 
-q_filter = {"parameter": ["probability", "e_imag"], "limit": ["lower", "upper"], "value": [0.84, 0.3]}
+q_filter_CSII = {"parameter": ["probability", "e_imag", "zmag"], "limit": ["lower", "upper", "lower"],
+                 "value": [0.839, 0.3, 0]}
 
-CSII_cluster, CSII_df = create_df(CSII_raw, CSII_cols, CSII_names, q_filter)
+CSII_cluster, CSII_df = create_df(CSII_raw, CSII_cols, CSII_names, q_filter_CSII)
 
 CSII_df["ref_age"] = CSII_df["age_C"]
 
@@ -212,9 +233,9 @@ CSIII_names = ["Cluster_id", "plx", "gmag", "e_gmag", "rmag", "e_rmag", "imag", 
                "Jmag", "e_Jmag", "Hmag", "e_Hmag", "Kmag", "e_Kmag",
                "age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "probability"]
 
-q_filter = {"parameter": ["probability"], "limit": ["lower"], "value": [0.5]}
+q_filter_CSIII = {"parameter": ["probability"], "limit": ["lower"], "value": [0.5]}
 
-CSIII_cluster, CSIII_df = create_df(CSIII_raw, CSIII_cols, CSIII_names, q_filter)
+CSIII_cluster, CSIII_df = create_df(CSIII_raw, CSIII_cols, CSIII_names, q_filter_CSIII)
 
 CSIII_df["ref_age"] = CSIII_df["age_C"]
 
@@ -223,23 +244,23 @@ CSIII_df.replace(float(99), np.nan, inplace=True)
 
 case_study_dfs.append(CSIII_df)
 
+
 # ======================================================================================================================
 
 
-# testing
-# if __name__ == "__main__":
-#
-#     CSIII_raw = "data/Cluster_data/all_ages/IC_4665_BCD_ages.csv"
-#
-#     CSIII_cols = ["Cluster", "median_plx", "g", "r", "i", "z", "y", "J", "H", "K",
-#                   "logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D",
-#                   "prob_max"]
-#
-#     CSIII_names = ["Cluster_id", "plx", "gmag", "rmag", "imag", "zmag", "ymag", "Jmag", "Hmag", "Kmag",
-#                    "age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "probability"]
-#
-#     q_filter = {"parameter": ["probability"], "limit": ["lower"], "value": [0.5]}
-#
-#     CSIII_cluster, CSIII_df = create_df(CSIII_raw, CSIII_cols, CSIII_names, q_filter)
-#
-#     print(min(CSIII_df.probability))
+def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_ref: list = None,
+                         id_col: str = "Cluster_id"):
+    concat_df = pd.concat(df_list, axis=0)
+    concat_df.drop_duplicates(id_col, inplace=True)
+    reference_cols = [id_col] + [col for col in concat_df.columns if ref_key in col]
+
+    if master_ref:
+        concat_df["ref_{}".format(ref_key)] = np.where(~concat_df[master_ref[0]].isna(), concat_df[master_ref[0]],
+                                                       np.where(~concat_df[master_ref[1]].isna(),
+                                                                concat_df[master_ref[1]], concat_df[master_ref[2]]))
+        reference_cols = ["ref_{}".format(ref_key)] + reference_cols
+    concat_df[reference_cols].to_csv(output_path, mode="w",
+                                     header=True)
+
+# create_reference_csv(df_list=cluster_df_list,
+#                      output_path="/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv", ref_key="age")

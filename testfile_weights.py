@@ -1,32 +1,20 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 from Classfile import *
-from pre_processing import CII_df, CII_clusters, case_study_dfs, case_study_clusters
-from datetime import date
-import os
+from pre_processing import CII_df, CII_clusters
+
+import my_utility
 
 """
 Just a short script checking the differences between weighted and unweighted SVR.
 """
-
-# 0.1 Set the correct output paths
-main = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Isochrone_Archive/Coding/"
-subdir = date.today()
-output_path = os.path.join(main, str(subdir))
-try:
-    os.mkdir(output_path)
-except FileExistsError:
-    pass
-output_path = output_path + "/"
+output_path = my_utility.set_output_path()
 
 HP_file = "data/Hyperparameters/Weight_test.csv"
-sns.set_style("darkgrid")
+my_utility.setup_HP(HP_file)
 
-try:
-    pd.read_csv(HP_file)
-except FileNotFoundError:
-    with open(HP_file, "w") as f:
-        f.write("id,name,abs_mag,cax,score,std,C,epsilon,gamma,kernel\n")
+sns.set_style("darkgrid")
+save_plot = False
 
 for i, cluster in enumerate(CII_clusters):
     OC = star_cluster(cluster, CII_df)
@@ -59,4 +47,5 @@ for i, cluster in enumerate(CII_clusters):
     plt.legend(bbox_to_anchor=(1, 1), loc="upper right")
     plt.colorbar(sc)
     fig1.show()
-    fig1.savefig(output_path + "Weightcomparison_{0}_{1}.pdf".format(OC.name, OC.CMD_specs["short"]), dpi=500)
+    if save_plot:
+        fig1.savefig(output_path + "Weight_comparison_{0}_{1}.pdf".format(OC.name, OC.CMD_specs["short"]), dpi=500)

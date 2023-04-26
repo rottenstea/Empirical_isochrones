@@ -22,7 +22,7 @@ except FileExistsError:
     pass
 output_path = output_path + "/"
 
-HP_file = "data/Hyperparameters/test_temp.csv"
+HP_file = "../data/Hyperparameters/test_temp.csv"
 
 # Catalog import
 # ----------------------------------------------------------------------------------------------------------------------

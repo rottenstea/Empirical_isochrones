@@ -1,4 +1,5 @@
 from Classfile import *
+import my_utility
 import os
 from joblib import dump, load, Parallel, delayed
 import time
@@ -13,6 +14,9 @@ if __name__ == "__main__":
     # load pre-processing function for my different catalogs
     from pre_processing import cluster_df_list, cluster_name_list
 
+    HP_file = "data/Hyperparameters/Archive_real.csv"
+    my_utility.setup_HP(HP_file)
+
     # if using load and dump it is best to have this folder for the memmaps
     folder = './joblib_memmap'
     try:
@@ -24,7 +28,7 @@ if __name__ == "__main__":
     CII_clusters, CII_df = cluster_name_list[1], cluster_df_list[1]
 
     #  kwargs for the HP file and HP search grid
-    kwargs = {"HP_file": "data/Hyperparameters/CatalogII.csv", "grid": None}
+    kwargs = dict(grid=None, HP_file=HP_file, catalog_mode=True)
 
     # define number of resamplings
     n_boot = 20
@@ -52,7 +56,7 @@ if __name__ == "__main__":
 
         # time the function runtime
         tic = time.time()
-        Parallel(n_jobs=6)(delayed(OC.resample_curves)(idx=idx, output=output, **kwargs) for idx in range(n_boot))
+        Parallel(n_jobs=6)(delayed(OC.resample_curves)(idx=idx, output=output, kwargs=kwargs) for idx in range(n_boot))
         toc = time.time()
         print(toc - tic, "s parallel")
 

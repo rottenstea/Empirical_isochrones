@@ -8,7 +8,7 @@ import seaborn as sns
 # Density map and plots of the clusters
 # -------------------------------------------
 def CMD_density_design(A, gamma: float = 0.7, to_RBG: list = None, from_RBG: list = None, marker: str = ".",
-                       s: int = 25, lw: int = 0, density_plot=True, kde: bool = False, cluster_obj=None,
+                       s: int = 50, lw: int = 0, density_plot=True, kde: bool = False, cluster_obj=None,
                        fig_specs: list = None, title_axes_specs: list = None):
     if from_RBG is None:
         from_RBG = [0.62, 0.79, 0.88]

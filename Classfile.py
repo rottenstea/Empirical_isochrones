@@ -30,7 +30,7 @@ def RSS(e1, e2):
 
 class star_cluster(object):
 
-    def __init__(self, name: str, catalog: pd.DataFrame):  # --> works in main
+    def __init__(self, name: str, catalog: pd.DataFrame, catalog_mode: bool = True):  # --> works in main
 
         # Step 1: slashes in clusternames are causing problems (CATALOG III)
 
@@ -41,7 +41,10 @@ class star_cluster(object):
 
         # Step 2: read in cluster data
         self.data = catalog[catalog.Cluster_id == name]
-
+        if catalog_mode:
+            self.catalog_id = self.data["catalog"].unique()[0]
+        else:
+            self.catalog_id = None
         # Step 3: Global cluster properties do not change with changing CMDs
         # self.catalog = None
         self.distance = 1000 / self.data.plx
@@ -69,7 +72,6 @@ class star_cluster(object):
         # PCA variables
         self.PCA_XY = None
         self.pca = None
-
 
     def create_CMD(self, CMD_params: list = None, return_errors: bool = False):  # --> works in main
 
@@ -144,16 +146,19 @@ class star_cluster(object):
         delta_c1 = CMD_errors.filter(regex=self.CMD_specs["filters"][1]).to_numpy().reshape(len(CMD_errors), )
         delta_c2 = CMD_errors.filter(regex=self.CMD_specs["filters"][2]).to_numpy().reshape(len(CMD_errors), )
 
+        delta_cax = cax_error(delta_c1, delta_c2)
+        zero_indices = np.where(delta_cax == False)[0]
+        m = min(i for i in delta_cax if i > 0)
+        for z_id in zero_indices:
+            delta_cax[z_id] = m
+
         try:
             delta_Mabs = abs_mag_error(CMD_plx, CMD_errors[cols[1]], delta_m).to_numpy()
-            delta_cax = cax_error(delta_c1, delta_c2)
-
             weights = (1 / RSS(delta_Mabs, delta_cax)).reshape(len(delta_cax), 1)
 
         except KeyError:
-            print("Keyerror, plx errors are missing!!")
-
-            weights = (1 / cax_error(delta_c1, delta_c2)).reshape(len(delta_c1), 1)
+            print("No plx errors found, using only color axis errors for the weight calculation.")
+            weights = (1 / delta_cax).reshape(len(delta_cax), 1)
 
         if all(weights >= 0):
             self.weights = min_max_scaler.fit_transform(weights).reshape(len(weights), )
@@ -181,23 +186,29 @@ class star_cluster(object):
         ).rename_axis("kernel")
         return results_df[["params", "rank_test_score", "mean_test_score", "std_test_score"]]
 
-    def SVR_read_from_file(self, file: str):  # --> works in main
+    def SVR_read_from_file(self, file: str, catalog_mode: bool = False):  # --> works in main
 
         # 1. load the file containing all saved hyperparameters as pd.DataFrame
         hp_df = pd.read_csv(file)
 
         # 2. filter the exact HP needed for 1) a specific cluster and 2) a specific CMD
-        filtered_values = np.where(
-            (hp_df['name'] == self.name) &  # (1
-            (hp_df['abs_mag'] == self.CMD_specs['axes'][0]) & (hp_df['cax'] == self.CMD_specs['axes'][1]))[0]  # (2
-
+        if not catalog_mode:
+            filtered_values = np.where(
+                (hp_df['name'] == self.name) &  # (1
+                (hp_df['abs_mag'] == self.CMD_specs['axes'][0]) & (hp_df['cax'] == self.CMD_specs['axes'][1]))[0]  # (2
+        # * and 3) catalog
+        else:
+            filtered_values = np.where(
+                (hp_df['name'] == self.name) & (hp_df["catalog_id"] == self.catalog_id) &  # (1 + (3
+                (hp_df['abs_mag'] == self.CMD_specs['axes'][0]) & (hp_df['cax'] == self.CMD_specs['axes'][1]))[0]  # (2
+            # print(hp_df.loc[filtered_values])
         # 3. the columns with the SVR tuning parameters are grabbed in the form of a dict
         params = hp_df.loc[filtered_values][['C', 'epsilon', 'gamma', 'kernel']].to_dict(orient="records")[0]
 
         return params
 
     def SVR_Hyperparameter_tuning(self, input_array: np.ndarray, weight_data: np.ndarray, output_file: str = None,
-                                  grid: dict = None):  # --> works in main
+                                  grid: dict = None, catalog_mode: bool = False):  # --> works in main
 
         # 1. Split and reshape the input array for the train_test_split() function
         X_data = input_array[:, 0].reshape(len(input_array[:, 0]), 1)
@@ -228,9 +239,15 @@ class star_cluster(object):
 
         # 8. Write the output to the Hyperparameter file:
         # Cluster name and CMD specs MUST be included for unique identification of the correct hyperparameters
-        if output_file:
+        if catalog_mode:
+            output_data = {"name": self.name, "abs_mag": self.CMD_specs["axes"][0], "cax": self.CMD_specs["axes"][1],
+                           "score": ranking.mean_test_score[0], "std": ranking.std_test_score[0],
+                           "catalog_id": self.catalog_id}
+        else:
             output_data = {"name": self.name, "abs_mag": self.CMD_specs["axes"][0], "cax": self.CMD_specs["axes"][1],
                            "score": ranking.mean_test_score[0], "std": ranking.std_test_score[0]}
+            # new
+        if output_file:
             output_data = output_data | ranking.params[0]
 
             df_row = pd.DataFrame(data=output_data, index=[0])
@@ -246,7 +263,7 @@ class star_cluster(object):
 
     def curve_extraction(self, svr_data: np.ndarray, HP_file: str, svr_predict: np.ndarray = None,
                          svr_weights: np.ndarray = None,
-                         grid: dict = None, always_tune: bool = False):  # --> works in main
+                         grid: dict = None, always_tune: bool = False, catalog_mode: bool = False):  # --> works in main
 
         # 1. Define the array which is used as base for the prediction of the curve
         # If the svr_data is an array of bootstrapped values, the prediction still needs to be performed on the
@@ -267,15 +284,15 @@ class star_cluster(object):
         # 3. Either read in the SVR parameters from the HP file, or determine them by tuning first
         if not always_tune:
             try:
-                params = self.SVR_read_from_file(file=HP_file)
+                params = self.SVR_read_from_file(file=HP_file, catalog_mode=catalog_mode)
             except IndexError:
                 print("Index error: Running HP tuning for {}...".format(self.name))
                 params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights,
                                                         output_file=HP_file,
-                                                        grid=grid)
+                                                        grid=grid, catalog_mode=catalog_mode)
         else:
             params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights, output_file=None,
-                                                    grid=grid)
+                                                    grid=grid, catalog_mode=catalog_mode)
 
         # 4. Define the two coordinates for SVR and fit-predict the tuned model to them
         X = svr_data[:, 0].reshape(len(svr_data[:, 0]), 1)
@@ -375,7 +392,8 @@ class star_cluster(object):
         sorted_df = pd.DataFrame(data=sorted_array, columns=new_cols)
 
         if output_loc:
-            output_file = "{0}_{1}_nboot_{2}.csv".format(self.name, self.CMD_specs["short"], n_boot)
+            output_file = "{0}_{1}_nboot_{2}_cat_{3}.csv".format(self.name, self.CMD_specs["short"], n_boot,
+                                                                 self.catalog_id)
             sorted_df.to_csv(output_loc + output_file, mode="w", header=True)
 
         return sorted_df

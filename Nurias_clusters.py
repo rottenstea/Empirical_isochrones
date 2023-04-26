@@ -32,8 +32,8 @@ Pleiades_cluster, Pleiades_df = case_study_names[0], case_study_dfs[0]
 
 Pleiades_filtered_df = Pleiades_df[Pleiades_df["imag"] > 13]
 # ----------------------------------------------------------------------------------------------------------------------
-J, H, K = np.genfromtxt("data/PARSEC_isochrones/Nuria_clusters/2MASS_30Myr.txt", usecols=(-3, -2, -1), unpack=True)
-i = np.genfromtxt("data/PARSEC_isochrones/Nuria_clusters/panSTARRs1_30Myr.txt", usecols=(-4))
+J, H, K = np.genfromtxt("data/Isochrones/PARSEC_isochrones/Nuria_clusters/2MASS_30Myr.txt", usecols=(-3, -2, -1), unpack=True)
+i = np.genfromtxt("data/Isochrones/PARSEC_isochrones/Nuria_clusters/panSTARRs1_30Myr.txt", usecols=(-4))
 
 IC4665_cluster, IC4665_df = case_study_names[1], case_study_dfs[1]
 
@@ -44,7 +44,7 @@ N_df = pd.concat([Pleiades_filtered_df, IC4665_filtered_df], axis=0)
 sns.set_style("darkgrid")
 colors = ["red", "darkorange"]
 kwargs = dict(grid=None, HP_file=HP_file)
-save_plot = True
+save_plot = False
 
 fig = plt.figure(figsize=(4, 6))
 ax = plt.subplot2grid((1, 1), (0, 0))
@@ -53,8 +53,8 @@ cm = plt.cm.get_cmap("crest")
 
 for i, cluster in enumerate(case_study_names[:]):
 
-    OC = star_cluster(cluster, N_df)
-    deltas = OC.create_CMD(CMD_params=["imag", "imag", "Kmag"], return_errors=True)
+    OC = star_cluster(cluster, N_df, catalog_mode=False)
+    deltas = OC.create_CMD(CMD_params=["imag", "imag", "zmag"], return_errors=True)
 
     # 3. Do some initial HP tuning if necessary
     try:
