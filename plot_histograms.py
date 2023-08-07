@@ -10,10 +10,15 @@ from astropy.visualization import hist as astrohist
 import matplotlib.gridspec as gridspec
 
 output_path = my_utility.set_output_path()
-savefig = False
+savefig = True
 
-CI_df, CII_df, CIII_df, AOI_df, AOII_df, AOIII_df = cluster_df_list
-CI_names, CII_names, CIII_names, AOI_names, AOII_names, AOIII_names = cluster_name_list
+sns.set_style("darkgrid")
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 10
+
+CI_df, CII_df, CIII_df, AOI_df, AOII_df, AOIII_df, AOIV_df = cluster_df_list
+CI_names, CII_names, CIII_names, AOI_names, AOII_names, AOIII_names, AOIV_names = cluster_name_list
 
 alph = 1
 
@@ -70,10 +75,10 @@ ax23.hist(x=logage_B, histtype='step', alpha=alph)
 ax23.set_title("Dias $et. al.$ 2020")
 # -----------------------------------------------------------------------
 plt.subplots_adjust(wspace=0.3, hspace=0.4)
-plt.show()
+#plt.show()
 
-if savefig:
-    plt.savefig(output_path+"Age_histograms.pdf", dpi=500)
+#if savefig:
+#    plt.savefig(output_path+"Age_histograms.pdf", dpi=500)
 
 age_D_arr, logage_D_arr = age_D.to_numpy(), logage_D.to_numpy()
 age_D_arr, logage_D_arr = age_D_arr[~np.isnan(age_D_arr)], logage_D_arr[~np.isnan(logage_D_arr)]
@@ -124,7 +129,7 @@ ax11 = plt.subplot2grid((1, 3), (0, 0))
 ax12 = plt.subplot2grid((1, 3), (0, 1), sharey=ax11)
 ax13 = plt.subplot2grid((1, 3), (0, 2), sharey=ax11)
 
-fig2.subplots_adjust(left=0.1, right=0.95, bottom=0.15)
+fig2.subplots_adjust(left=0.14, right=0.95, bottom=0.16)
 
 for array, title, ax in zip([logage_B_arr, logage_C_arr, logage_D_arr],
                             ["Bossini $et. al.$ 2019", "Cantat-Gaudin ${et. al.}$ 2020a", "Dias $et. al.$ 2020"],
@@ -144,19 +149,19 @@ for array, title, ax in zip([logage_B_arr, logage_C_arr, logage_D_arr],
 ax11.set_ylabel('Count')
 ax13.legend(prop=dict(size=12))
 
-plt.show()
+#plt.show()
 
-fig2.savefig(output_path + "logage_hist_knuth_C1.pdf", dpi=500)
+#fig2.savefig(output_path + "logage_hist_knuth_C1.pdf", dpi=500)
 
-fig3 = plt.figure(figsize=(10, 4))
+fig3 = plt.figure(figsize=(6, 4))
 
 # Catalog I
 ax11 = plt.subplot2grid((1, 3), (0, 0))
 ax12 = plt.subplot2grid((1, 3), (0, 1), sharey=ax11)
 ax13 = plt.subplot2grid((1, 3), (0, 2), sharey=ax11)
 
-if savefig:
-    fig2.subplots_adjust(left=0.1, right=0.95, bottom=0.15)
+#if savefig:
+#    fig2.subplots_adjust(left=0.1, right=0.95, bottom=0.15)
 
 for array, title, ax in zip([age_B_arr, age_C_arr, age_D_arr],
                             ["Bossini $et. al.$ 2019", "Cantat-Gaudin ${et. al.}$ 2020a", "Dias $et. al.$ 2020"],
@@ -176,9 +181,9 @@ for array, title, ax in zip([age_B_arr, age_C_arr, age_D_arr],
 ax11.set_ylabel('Count')
 ax13.legend(prop=dict(size=12))
 
-plt.show()
-if savefig:
-    fig3.savefig(output_path + "age_hist_knuth_C1.pdf", dpi=500)
+#plt.show()
+#if savefig:
+ #   fig3.savefig(output_path + "age_hist_knuth_C1.pdf", dpi=500)
 
 Archive_df = pd.concat([cluster_df_list[i] for i in [0, 2, 3, 4, 5]], axis=0)
 Archive_df.drop_duplicates("Cluster_id", inplace=True)
@@ -188,35 +193,38 @@ ages = 10 ** logages / 1e6
 
 ages, logages = ages[~np.isnan(ages)], logages[~np.isnan(logages)]
 
-fig4 = plt.figure(figsize=(4, 4))
 sns.set_style("darkgrid")
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 10
+
+fig4 = plt.figure(figsize=(3.54399, 2.5))
 colors_f4 = ['#a1dab4', '#41b6c4', '#225ea8']
 
 ax = plt.subplot2grid((1, 1), (0, 0))
 
-# plt.subplots_adjust(left = 0.1,right = 0.75)
+plt.subplots_adjust(left = 0.125,right = 0.98, top=.99, bottom=0.171)
 
 
-astrohist(logages, bins=len(logages), histtype='stepfilled', ax=ax, density=False,
-          alpha=0.4, label='true distribution', color=colors_f4[2])  # , edgecolor = colors_f4[2])
+#astrohist(logages, bins=len(logages), histtype='stepfilled', ax=ax, density=False,
+ #         alpha=0.6, label='true distribution', color=colors_f4[2], edgecolor = colors_f4[2] )  # , edgecolor = colors_f4[2])
 
 # astrohist(logages, bins="blocks", ax=ax, color=colors_f4[0], alpha = 1, lw = 2,
 #             histtype='step', label="Blocks", density = False)
 
-astrohist(logages, bins="knuth", ax=ax, color="black", alpha=1, lw=2,
-          histtype='step', label="Knuth", density=False)
+astrohist(logages, bins="knuth", ax=ax, color=colors_f4[2], alpha=1, lw=2,
+          histtype='step',  density=False)
 
 ax.set_xlabel('log age')
 ax.set_ylabel('Count')
-ax.legend(loc="upper right", prop=dict(size=12))
+#ax.legend(loc="upper right")
 
-plt.show()
+fig4.show()
 
 if savefig:
-    fig4.savefig(output_path + "logage_hist_knuth.pdf", dpi=500)
+    fig4.savefig(output_path + "Histogram_logage.pdf", dpi=600)
 
 fig5 = plt.figure(figsize=(6, 3))
-sns.set_style("darkgrid")
 colors_f5 = ['#a1dab4', '#41b6c4', '#225ea8']
 
 spec = gridspec.GridSpec(ncols=4, nrows=1, figure=fig4)

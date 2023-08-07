@@ -11,10 +11,15 @@ import matplotlib.pyplot as plt
 
 output_path = my_utility.set_output_path()
 
-savefig = False
+sns.set_style("darkgrid")
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 10
 
-CI_df, CII_df, CIII_df, AOI_df, AOII_df, AOIII_df = cluster_df_list
-CI_names, CII_names, CIII_names, AOI_names, AOII_names, AOIII_names = cluster_name_list
+savefig = True
+
+CI_df, CII_df, CIII_df, AOI_df, AOII_df, AOIII_df, AOIV_df = cluster_df_list
+CI_names, CII_names, CIII_names, AOI_names, AOII_names, AOIII_names, AOIV_names = cluster_name_list
 
 # for XYZ plotting
 xyz_list = []
@@ -27,6 +32,7 @@ for df in cluster_df_list:
 # 1. Fuse
 Archive_clusters = np.concatenate([cluster_name_list[i] for i in [0, 2, 3, 4, 5]], axis=0)
 Archive_df = pd.concat(xyz_list, axis=0)
+print(len(Archive_clusters))
 
 min_age = np.min(Archive_df["ref_age"])
 max_age = np.max(Archive_df["ref_age"])
@@ -52,17 +58,18 @@ fig.update_layout(margin=dict(l=0, r=0, b=0, t=0), template='plotly_white',
                   title={'text': 'Cluster position and ages',
                          'x': 0.5, 'xanchor': 'center'})
 
-plot(fig, filename=output_path + 'XYZ_express.html')
+# plot(fig, filename=output_path + 'XYZ_express.html')
 
 # fig.write_html(output_path+"XYZ_express.html")
 
 # 2D plot
 
-fig_2D, ax = plt.subplots(1, 3, layout="constrained")
+fig_2D, ax = plt.subplots(1, 3, figsize=(7.24551, 2.6))
+
+plt.subplots_adjust(top=0.99, left=0.085, right=0.87, bottom=0.055, wspace=0.25)
 
 a = plt.get_cmap("YlGnBu_r")
 
-sns.set_style("darkgrid")
 norm = plt.Normalize(Archive_df['ref_age'].min(), Archive_df['ref_age'].max())
 sm = plt.cm.ScalarMappable(cmap="YlGnBu_r", norm=norm)
 sm.set_array([])
@@ -100,68 +107,19 @@ ax[2].yaxis.set_ticklabels([])
 
 # Remove the legend and add a colorbar
 ax[2].get_legend().remove()
-c = fig_2D.colorbar(sm, ax=[ax[0], ax[1], ax[2]], location='bottom', fraction=0.1, aspect=35)
+c = fig_2D.colorbar(sm, ax=[ax[0], ax[1], ax[2]], location='bottom', fraction=0.1, aspect=35, pad=0.2)
 cax = c.ax
-cax.text(6.6, 0.3, 'log age')
+cax.tick_params(labelsize=10)
+
+cax.text(6.6, 0.2, 'log age')
 
 handles, labels = ax[2].get_legend_handles_labels()
 entries_to_skip = 7
 handles_new = handles[entries_to_skip:-1]
 labels_new = labels[entries_to_skip:-1]
 labs = labels_new[:1] + [f'{int(lab)}' for lab in labels_new[1:]]
-ax[2].legend(handles_new, labs, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.5)
-
-fig_2D.set_figheight(4)
-fig_2D.set_figwidth(10)
-sns.set(font_scale=1.2)
+ax[2].legend(handles_new, labs, bbox_to_anchor=(1.02, 1), loc=2, borderaxespad=0.5)
 
 plt.show()
-
 if savefig:
-    fig_2D.savefig(output_path + "XYZ_plot_CGvalues_all.pdf", dpi=600)
-
-# Extinction
-def extinction_plot(dataframe, extinction_vec, arrow_pos, params, title_ax_labels, extinction_mag: str = "G",
-                    rotate: int = -44, figure_specs=None):
-    if figure_specs is None:
-        figure_specs = [5, 6]
-
-    CMD_parameters = [params[1], params[2]]
-    parallax = params[0]
-
-    distance = 1000 / dataframe[parallax].to_numpy()
-    mag, color_ax = dataframe[CMD_parameters[0]].to_numpy(), dataframe[CMD_parameters[1]].to_numpy()
-    abs_mag = (mag - 5 * np.log10(distance) + 5)
-    arr = np.stack([color_ax, abs_mag], axis=1)
-    cleaned_arr = arr[~np.isnan(arr).any(axis=1), :]
-    sorted_arr = cleaned_arr[cleaned_arr[:, 1].argsort()]
-    f = CMD_density_design(sorted_arr, fig_specs=figure_specs,
-                           title_axes_specs=title_ax_labels)
-
-    plt.annotate("", xy=(arrow_pos[0] + extinction_vec[0], arrow_pos[1] + extinction_vec[1]),
-                 xytext=(arrow_pos[0], arrow_pos[1]),
-                 arrowprops=dict(arrowstyle="->", color="k"))
-    plt.text(arrow_pos[0] + 0.1, arrow_pos[1] + 0.1, "A$_{0}$=1".format(extinction_mag), size=8,
-             rotation=rotate)
-
-    return f
-
-
-CMD_params = ["plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
-extinction_DR2 = [0.5290999999999997, 1]
-
-title_ax_CI = ["Catalog I sources / DR 2 (Cantat-Gaudin+2020)", "BP-RP", "abs Gmag"]
-CI_extinction_fig = extinction_plot(dataframe=CI_df, extinction_vec=extinction_DR2,
-                                    arrow_pos=[3.5, 7], params=CMD_params, title_ax_labels=title_ax_CI)
-
-title_ax_CIII = ["Sco-Cen clusters / DR2", "BP-RP", "abs Gmag"]
-CIII_extinction_fig = extinction_plot(dataframe=CIII_df, extinction_vec=extinction_DR2,
-                                      arrow_pos=[4, 8], params=CMD_params, title_ax_labels=title_ax_CIII)
-
-CI_extinction_fig.show()
-CIII_extinction_fig.show()
-
-if savefig:
-    CI_extinction_fig.savefig(output_path + "Extinction_DR2_CI.pdf", dpi=600, bbox_inches ="tight")
-    CIII_extinction_fig.savefig(output_path + "Extinction_DR2_CIII.pdf", dpi=600, bbox_inches="tight")
-
+    fig_2D.savefig(output_path + "XYZ_plot_CGvalues.pdf", dpi=600)

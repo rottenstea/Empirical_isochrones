@@ -46,8 +46,10 @@ class star_cluster(object):
         else:
             self.catalog_id = None
         # Step 3: Global cluster properties do not change with changing CMDs
-        # self.catalog = None
-        self.distance = 1000 / self.data.plx
+        if 'plx' in self.data.columns:
+            self.distance = 1000 / self.data.plx
+        else:
+            self.distance = None
         self.Nstars = len(self.data)
 
         age_cols = [col for col in self.data.columns if 'age' in col]
@@ -73,7 +75,7 @@ class star_cluster(object):
         self.PCA_XY = None
         self.pca = None
 
-    def create_CMD(self, CMD_params: list = None, return_errors: bool = False):  # --> works in main
+    def create_CMD(self, CMD_params: list = None, return_errors: bool = False, no_errors: bool = False):  # --> works in main
 
         if not CMD_params:
             self.CMD_specs = dict(axes=["Gmag", "BP-RP"], filters=["Gmag", "BPmag", "RPmag"], short="G_BPRP")
@@ -104,7 +106,7 @@ class star_cluster(object):
         # first remove nans
         nan_idxes = np.isnan(arr).any(axis=1)
         cleaned_arr = arr[~nan_idxes]
-        # then sort the array along the y axis
+        # then sort the array along the yaxis
         sort_idxes = cleaned_arr[:, 1].argsort()
         sorted_arr = cleaned_arr[sort_idxes]
 
@@ -119,11 +121,12 @@ class star_cluster(object):
                                                                              density_plot=False)
 
         # weights
-        if not return_errors:
-            self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes)
-        else:
-            errors = self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes, return_deltas=return_errors)
-            return errors
+        if not no_errors:
+            if not return_errors:
+                self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes)
+            else:
+                errors = self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes, return_deltas=return_errors)
+                return errors
 
     def create_weights(self, sorting_ids: np.ndarray, nan_ids: np.ndarray, cols: list = None,
                        return_deltas: bool = False):  # --> works in main
@@ -147,7 +150,7 @@ class star_cluster(object):
         delta_c2 = CMD_errors.filter(regex=self.CMD_specs["filters"][2]).to_numpy().reshape(len(CMD_errors), )
 
         delta_cax = cax_error(delta_c1, delta_c2)
-        zero_indices = np.where(delta_cax == False)[0]
+        zero_indices = np.where(delta_cax is False)[0]
         m = min(i for i in delta_cax if i > 0)
         for z_id in zero_indices:
             delta_cax[z_id] = m
@@ -167,8 +170,10 @@ class star_cluster(object):
             print("No errors found for the CMD data. Setting weight array to unity.")
 
         if return_deltas:
-            return [delta_c1, delta_c2, delta_m]
-
+            try:
+                return [delta_c1, delta_c2, delta_m, delta_cax, delta_Mabs]
+            except UnboundLocalError:
+                return [delta_c1, delta_c2, delta_m, delta_cax]
     @staticmethod
     def gridsearch_and_ranking(X_train: np.ndarray, Y_train: np.ndarray, grid: dict,
                                weight_train: np.ndarray):  # --> works in main
@@ -186,7 +191,7 @@ class star_cluster(object):
         ).rename_axis("kernel")
         return results_df[["params", "rank_test_score", "mean_test_score", "std_test_score"]]
 
-    def SVR_read_from_file(self, file: str, catalog_mode: bool = False):  # --> works in main
+    def SVR_read_from_file(self, file: str, catalog_mode: bool = True):  # --> works in main
 
         # 1. load the file containing all saved hyperparameters as pd.DataFrame
         hp_df = pd.read_csv(file)
@@ -208,7 +213,7 @@ class star_cluster(object):
         return params
 
     def SVR_Hyperparameter_tuning(self, input_array: np.ndarray, weight_data: np.ndarray, output_file: str = None,
-                                  grid: dict = None, catalog_mode: bool = False):  # --> works in main
+                                  grid: dict = None, catalog_mode: bool = True):  # --> works in main
 
         # 1. Split and reshape the input array for the train_test_split() function
         X_data = input_array[:, 0].reshape(len(input_array[:, 0]), 1)
@@ -263,7 +268,7 @@ class star_cluster(object):
 
     def curve_extraction(self, svr_data: np.ndarray, HP_file: str, svr_predict: np.ndarray = None,
                          svr_weights: np.ndarray = None,
-                         grid: dict = None, always_tune: bool = False, catalog_mode: bool = False):  # --> works in main
+                         grid: dict = None, always_tune: bool = False, catalog_mode: bool = True):  # --> works in main
 
         # 1. Define the array which is used as base for the prediction of the curve
         # If the svr_data is an array of bootstrapped values, the prediction still needs to be performed on the

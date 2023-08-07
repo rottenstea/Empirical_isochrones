@@ -9,23 +9,33 @@ import seaborn as sns
 from Empirical_iso_reader import merged_BPRP, merged_BPG, merged_GRP
 
 output_path = my_utility.set_output_path()
-save_plot = False
+save_plot = True
 # ----------------------------------------------------------------------------------------------------------------------
+
+merged_BPRP = merged_BPRP[merged_BPRP.Cluster_id != "Meingast_1_ESSII"]
+merged_BPG = merged_BPG[merged_BPG.Cluster_id != "Meingast_1_ESSII"]
+merged_GRP = merged_GRP[merged_GRP.Cluster_id != "Meingast_1_ESSII"]
 
 # Plot
 # =======
 # 2D Fig
 
-a = plt.get_cmap("YlGnBu_r")
 sns.set_style("darkgrid")
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 10
+
+a = plt.get_cmap("YlGnBu_r")
 norm = plt.Normalize(merged_BPRP.ref_age.min(), merged_BPRP.ref_age.max())
 sm = plt.cm.ScalarMappable(cmap="YlGnBu_r", norm=norm)
 sm.set_array([])
 
 age_low = 6
-age_up = 10
+age_up = 11
 
-fig_2D, ax = plt.subplots(1, 3, figsize=(8, 5), layout="constrained", sharey="row")
+fig_2D, ax = plt.subplots(1, 3, figsize=(7.24551, 4.4), sharey="row")
+
+plt.subplots_adjust(left=0.08, bottom=0.0, top=0.99, right=0.99, wspace=0.1)
 
 BPRP = sns.lineplot(data=merged_BPRP[(merged_BPRP["ref_age"] >= age_low) & (merged_BPRP["ref_age"] <= age_up)], x="m_x",
                     y="m_y", hue="ref_age", palette=a, hue_norm=norm, legend=False, sort=False,
@@ -54,24 +64,63 @@ ax[2].set_ylim(17, -4.2)
 # c = fig_2D.colorbar(sm, location='right', fraction=0.1)
 # cax = c.ax
 # cax.text(0, 6.8, 'log age')
-c = fig_2D.colorbar(sm, ax=[ax[0], ax[1], ax[2]], location='bottom', fraction=0.1, aspect=35)
+c = fig_2D.colorbar(sm, ax=[ax[0], ax[1], ax[2]], location='bottom', fraction=0.1, aspect=35, pad=0.12)
 cax = c.ax
+cax.tick_params(labelsize=10)
 cax.text(6.65, 0.3, 'log age')
 
 fig_2D.show()
 if save_plot:
-    fig_2D.savefig(output_path + "Summary_plot_2D_logage.pdf", dpi=600)
+    fig_2D.savefig(output_path + "Summary_plot_C2.pdf", dpi=600)
+'''
+
+# Poster figure (single panel)
+sns.set_style("darkgrid")
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 12
+
+a = plt.get_cmap("YlGnBu_r")
+norm = plt.Normalize(merged_BPRP.ref_age.min(), merged_BPRP.ref_age.max())
+sm = plt.cm.ScalarMappable(cmap="YlGnBu_r", norm=norm)
+sm.set_array([])
+
+age_low = 6
+age_up = 11
+
+fig_poster, ax = plt.subplots(1, 1, figsize=(3.5, 4.4))
+
+plt.subplots_adjust(left=0.16,bottom=0.11, top = 0.98, right=0.97, wspace=0.0)
+
+BPRP = sns.lineplot(data=merged_BPRP, x="m_x",
+                    y="m_y", hue="ref_age", palette=a, hue_norm=norm, legend=False, sort=False,
+                    lw=1, units="Cluster_id", ax=ax, estimator=None).set(xlabel=r"$\mathrm{G}_{\mathrm{BP}} - "
+                                                                                   r"\mathrm{G}_{\mathrm{RP}}$",
+                                                                            ylabel=r"$\mathrm{M}_{\mathrm{G}}$")
+ax.set_xlim(-0.5, 4.1)
+ax.set_ylim(14, -3.5)
+
+c = fig_poster.colorbar(sm, ax=ax, location='right', fraction=0.15, aspect=20, pad=0.05)
+cax = c.ax
+plt.text(5.2, 18, 'log age')
+
+fig_poster.show()
+if save_plot:
+    fig_poster.savefig(output_path + "C2_summary_plot.pdf", dpi=600)
+
 
 # ============
 # 3D Fig
 
 sorted_clusters = merged_GRP["Cluster_id"].drop_duplicates()
-norm = plt.Normalize(merged_BPRP.ref_age.min(), merged_BPRP.ref_age.max())
-a = plt.get_cmap("YlGnBu_r", len(sorted_clusters))
+age_range = merged_BPRP.drop_duplicates(subset="Cluster_id")
+#norm = plt.Normalize(age_range.min(), age_range.max())
+#a = plt.get_cmap("YlGnBu_r", len(sorted_clusters))
+cm = plt.cm.ScalarMappable(cmap="YlGnBu_r", norm=norm).to_rgba(age_range["ref_age"], alpha=None, bytes=False, norm=True)
 
-rgbs = a(range(len(sorted_clusters) + 40))
-col_hex = [colors.rgb2hex(c) for c in rgbs]
-colo_hex = col_hex[:84]
+#rgbs = cm(range(len(sorted_clusters)))
+col_hex = [colors.rgb2hex(c) for c in cm]
+colo_hex = col_hex[:]
 
 BPRP_x = [merged_BPRP[merged_BPRP["Cluster_id"] == cluster]['m_x'] for cluster in sorted_clusters]
 BPRP_y = [merged_BPRP[merged_BPRP["Cluster_id"] == cluster]['m_y'] for cluster in sorted_clusters]
@@ -87,7 +136,9 @@ fig = go.Figure()
 fig.update_xaxes(range=[-1, 4])
 fig.update_yaxes(range=[15, -4])
 
-fig.update_layout(width=680, height=780)
+#fig.update_layout(width=680, height=780)
+fig.update_layout(width=750, height=850)
+
 fig.update_layout(template='plotly_white')
 
 greek_dict = {"rho": r"\rho", "phi": r"\varphi", "beta": r"\beta",
@@ -116,11 +167,14 @@ for i, cluster in enumerate(sorted_clusters):
         c_label = "%s: %s Myr" % (cluster, round(10 ** (
             merged_BPRP[merged_BPRP["Cluster_id"] == cluster][
                 "ref_age"].unique()[0]) / 1e6, 2))
-    cluster_labels.append(c_label)
+
+    unified_label= f"{c_label:_<25}"
+    #unified_label = c_label.ljust(25)
+    cluster_labels.append(unified_label)
 
     trace = go.Scatter(x=merged_BPRP[merged_BPRP["Cluster_id"] == cluster]['m_x'],
                        y=merged_BPRP[merged_BPRP["Cluster_id"] == cluster]['m_y'],
-                       name=c_label,
+                       name=unified_label,
                        visible=True,  # make the first line visible by default
                        line=dict(color=colo_hex[i]))
     fig.add_trace(trace)
@@ -192,9 +246,9 @@ sliders = [dict(
 fig.update_layout(
     sliders=sliders,
     # xaxis_title="BP-RP",
-    yaxis_title="abs Gmag",
+    yaxis_title="absolute G magnitude",
 
-    autosize=True,
+    autosize=False,
     margin=dict(l=50, r=50, t=50, b=50),
     title={
         'text': 'Empirical isochrones',
@@ -203,8 +257,16 @@ fig.update_layout(
     }
 )
 
+
+fig.update_layout(
+    plot_bgcolor='rgb(234, 234, 241)',  # Set the background color to gray
+    xaxis=dict(gridcolor='white'),      # Set the x-axis grid line color to white
+    yaxis=dict(gridcolor='white'),      # Set the y-axis grid line color to white
+)
+
 # plot the fig
-plot(fig, filename=output_path + 'Empirical_isochrones_normal.html')
+plot(fig, filename=output_path + 'Empirical_isochrone_archive.html')
 # Write the figure to an HTML file
 if save_plot:
-    fig.write_html(output_path + 'Empirical_isochrones_normal.html', include_mathjax='cdn')
+    fig.write_html(output_path + 'Empirical_isochrone_archive.html')
+'''

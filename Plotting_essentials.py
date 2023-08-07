@@ -65,3 +65,61 @@ def CMD_density_design(A, gamma: float = 0.7, to_RBG: list = None, from_RBG: lis
         return kde_A
     else:
         return x, y, kwargs_CMD
+
+if __name__ == "__main__":
+
+    from Classfile import *
+    from pre_processing import cluster_df_list, cluster_name_list, WD_filter, CIII_clusters_new, CIII_df
+    import my_utility
+    from Empirical_iso_reader import merged_BPRP
+    # 0.1 Set the correct output paths
+    output_path = my_utility.set_output_path()
+
+    # 0.3 Create the archive from all the loaded data files
+    Archive_clusters = np.concatenate(cluster_name_list, axis=0)
+    Archive_df = pd.concat(cluster_df_list, axis=0)
+
+    sns.set_style("darkgrid")
+    plt.rcParams["mathtext.fontset"] = "stix"
+    plt.rcParams["font.family"] = "STIXGeneral"
+    plt.rcParams["font.size"] = 16
+    save_plot = True
+
+    # ----------------------------------------------------------------------------------------------------------------------
+    MG_comp = merged_BPRP[merged_BPRP["Cluster_id"].isin(["Stock_2", "RSG_8", "Ruprecht_147", "NGC_3532"])]
+
+    for n, cluster in enumerate(Archive_clusters):
+        if cluster in ["Stock_2", "RSG_8", "Ruprecht_147", "NGC_3532"]:
+
+            # 1. Create a class object for each cluster
+            df = Archive_df[Archive_df["Cluster_id"] == cluster]
+            OC = star_cluster(cluster, df)
+            OC.create_CMD()
+
+
+            CMD_density_design(OC.CMD, cluster_obj=OC, density_plot=False)
+            #OC.kwargs_CMD["s"] = 40
+
+            fig_talk, ax = plt.subplots(1, 1, figsize=(3.5, 5))
+
+            plt.subplots_adjust(left=0.17, bottom=0.12, top=0.99, right=0.975, wspace=0.0)
+
+            ax.scatter(OC.density_x, OC.density_y, **OC.kwargs_CMD)
+            ax.set_xlabel(r"$\mathrm{G}_{\mathrm{BP}} - \mathrm{G}_{\mathrm{RP}}$")
+            ax.set_ylabel(r"$\mathrm{M}_{\mathrm{G}}$", labelpad=1)
+
+            result_df = MG_comp[MG_comp["Cluster_id"] == OC.name]
+
+            plt.plot(result_df["l_x"], result_df["l_y"], color="grey", label="5. perc")
+            plt.plot(result_df["m_x"], result_df["m_y"], color="red", label="Isochrone")
+            plt.plot(result_df["u_x"], result_df["u_y"], color="grey", label="95. perc")
+
+            ylim = ax.get_ylim()
+
+            ax.set_ylim(ylim[1], ylim[0])
+            ax.text(0.2,9.5, s =OC.name.replace("_"," "))
+
+            fig_talk.show()
+
+            if save_plot:
+                fig_talk.savefig(output_path + "CMD_{}.pdf".format(OC.name), dpi=500)

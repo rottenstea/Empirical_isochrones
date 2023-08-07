@@ -13,7 +13,7 @@ from matplotlib.lines import Line2D
 # output path
 output_path = my_utility.set_output_path()
 sns.set_style("darkgrid")
-save_plot = False
+save_plot = True
 
 CI_clusters = cluster_name_list[0]
 CI_df = cluster_df_list[0]
@@ -21,16 +21,21 @@ CI_df = cluster_df_list[0]
 OC = star_cluster(CI_clusters[26], CI_df)
 OC.create_CMD()
 x_pca_density, y_pca_density, kw = CMD_density_design(OC.PCA_XY, cluster_obj=OC, density_plot=False)
-
-colors = ["#7fc97f", "#fdc086"]
+OC.kwargs_CMD["s"] = 20
+kw["s"] = 20
+#colors = ["#7fc97f", "#fdc086"]
+colors = ["#7fc97f", "#e7298a"]
 labels = ["c1", "c2"]
 
-fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(8, 6), gridspec_kw={'width_ratios': [1, 1]})
-sns.set(font_scale=1.4)
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(3.54399, 3), gridspec_kw={'width_ratios': [1, 1]})
+
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 10
 
 ax = plt.subplot2grid((1, 2), (0, 0))
 ax.scatter(OC.density_x, OC.density_y, **OC.kwargs_CMD)
-comp_BU = [1, 15]
+comp_BU = [1, 50]
 for i, (comp, var) in enumerate(zip(OC.pca.components_, OC.pca.explained_variance_)):
     comp = comp * var  # scale component by its variance explanation power
     comp_blown = comp * comp_BU[i]
@@ -63,12 +68,12 @@ legend_elements = [mpatches.Patch(color=colors[0], label='Comp. 1'),
                    mpatches.Patch(color=colors[1], label='Comp. 2'),
                    Line2D([0], [0], marker='.', color=None, lw=0, label='Sources',
                           markerfacecolor=kw["cmap"](0.7), markeredgecolor=kw["cmap"](1), markersize=10),
-                   Line2D([0], [1], ls='solid', color="black", lw=1, label='Axis direction')
+                   Line2D([0], [1], ls='solid', color="black", lw=1, label='PCA axes')
                    ]
-ax1.legend(handles=legend_elements, loc="best")
-plt.suptitle(OC.name.replace("_", " "))
-plt.subplots_adjust(left=0.03, right=0.95, bottom=0.12, wspace=0.1, hspace=0.1)
+ax1.legend(handles=legend_elements, loc="upper right")
+# plt.suptitle(OC.name.replace("_", " "))
+plt.subplots_adjust(left=0.06, bottom=0.143, top=0.93, wspace=0.12, right=0.98)
 
 plt.show()
 if save_plot:
-    plt.savefig(output_path + "{}_PCA_components.pdf".format(OC.name), dpi=500)
+    fig.savefig(output_path + "PCA_components_{}.pdf".format(OC.name), dpi=600)

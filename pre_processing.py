@@ -1,5 +1,7 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+pd.options.mode.chained_assignment = None
 
 """
 This file holds the function that converts the raw csv input files into pd.DataFrames and only retains the necessary
@@ -53,10 +55,10 @@ cluster_name_list = []
 CI_raw = data_path + "data/Cluster_data/all_ages/CatalogI_BCD_ages.csv"
 
 CI_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "Proba", "X", "Y", "Z",
-                           "N", "Plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
+                           "N", "Plx_DR2", "Gmag_DR2", "BP-RP_DR2", "E(BP/RP)"]
 
 CI_names = standard_names + ["age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "probability", "x", "y", "z",
-                             "Nstars", "plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
+                             "Nstars", "plx_DR2", "Gmag_DR2", "BP-RP_DR2", "excess"]
 
 q_filter_I = {"parameter": ["ruwe", "plx", "probability"], "limit": ["upper", "lower", "lower"],
               "value": [1.4, 0, 0.49]}
@@ -177,7 +179,10 @@ AOIII_cols = standard_cols + ["logage_Curtis", "logage_ESSIV", "RUWE", "Stab", "
 
 AOIII_names = standard_names + ["age_Cu", "age_ESSIV", "ruwe", "stability", "x", "y", "z"]
 
-AOIII_clusters, AOIII_df = create_df(AOIII_raw, AOIII_cols, AOIII_names, standard_filter)
+AOIII_filter = {"parameter": ["ruwe", "plx", "stability", "e_RPmag"], "limit": ["upper", "lower", "lower", "upper"],
+                "value": [1.4, 0, 49.5, 0.03]}
+
+AOIII_clusters, AOIII_df = create_df(AOIII_raw, AOIII_cols, AOIII_names, AOIII_filter)
 
 AOIII_df["catalog"] = 5
 AOIII_df["ref_age"] = AOIII_df["age_Cu"]
@@ -185,6 +190,23 @@ AOIII_df["Nstars"] = len(AOIII_df["age_Cu"])
 
 cluster_df_list.append(AOIII_df)
 cluster_name_list.append(AOIII_clusters)
+
+AOIV_raw = data_path + "data/Cluster_data/all_ages/Meingast1_ESSII_DR3.csv"
+
+AOIV_cols = standard_cols + ["logage_Curtis", "logage_ESSIV", "RUWE", "X_DR2", "Y_DR2", "Z_DR2"]
+
+AOIV_names = standard_names + ["age_Cu", "age_ESSIV", "ruwe", "x", "y", "z"]
+
+AOIV_filter = {"parameter": ["ruwe", "plx", "e_RPmag"], "limit": ["upper", "lower", "upper"],
+               "value": [1.4, 0, 0.03]}
+
+AOIV_clusters, AOIV_df = create_df(AOIV_raw, AOIV_cols, AOIV_names, AOIV_filter)
+AOIV_df["catalog"] = 50
+AOIV_df["ref_age"] = AOIV_df["age_Cu"]
+AOIV_df["Nstars"] = len(AOIV_df["age_Cu"])
+
+cluster_df_list.append(AOIV_df)
+cluster_name_list.append(AOIV_clusters)
 
 # ======================================================================================================================
 
@@ -233,7 +255,7 @@ CSIII_names = ["Cluster_id", "plx", "gmag", "e_gmag", "rmag", "e_rmag", "imag", 
                "Jmag", "e_Jmag", "Hmag", "e_Hmag", "Kmag", "e_Kmag",
                "age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "probability"]
 
-q_filter_CSIII = {"parameter": ["probability"], "limit": ["lower"], "value": [0.5]}
+q_filter_CSIII = {"parameter": ["probability"], "limit": ["lower", "lower"], "value": [0.5, 9]}
 
 CSIII_cluster, CSIII_df = create_df(CSIII_raw, CSIII_cols, CSIII_names, q_filter_CSIII)
 
@@ -262,5 +284,54 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
     concat_df[reference_cols].to_csv(output_path, mode="w",
                                      header=True)
 
-# create_reference_csv(df_list=cluster_df_list,
-#                      output_path="/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv", ref_key="age")
+
+create_reference_csv(df_list=cluster_df_list,
+                     output_path="/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv", ref_key="age")
+
+
+# 5. Plot the result
+def WD_filter(df, cols):
+    df["WD"] = 0
+
+    y_col = df[cols[0]].to_numpy()
+    x_col = (df[cols[1]] - df[cols[2]]).to_numpy()
+
+    # Define the linear function
+    intercept = 0.5 * max(y_col)
+    # print(intercept)
+    k = (0.5 * max(y_col) - max(y_col)) / (min(x_col) - 0.5 * max(x_col))
+
+    # print(k)
+
+    def linear_function(k, x, d):
+        return k * x + d
+
+    # Iterate over each point in the array
+    for i, x in enumerate(x_col):
+        y = y_col[i]
+        # Calculate the y value of the linear function at the given x coordinate
+        line_y = linear_function(k, x, intercept)
+        # Compare the y value of the linear function with the y coordinate of the point
+        if y < line_y:
+            pass
+            # print(f"({x}, {y}) is above the line y = 8 - 2.5*x")
+        elif y >= line_y:
+            df["WD"].iloc[i] = 1
+        # print(f"({x}, {y}) is below the line y = {intercept} - {k} *x")
+    res = df[df["WD"] == 0]
+
+    return res
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    # print(cluster_df_list[5].shape)
+
+    MG1_sin_WD = WD_filter(cluster_df_list[5], cols=["Gmag", "Gmag", "RPmag"])
+    g = plt.figure()
+    plt.scatter(cluster_df_list[5]["Gmag"] - cluster_df_list[5]["RPmag"], cluster_df_list[5]["Gmag"])
+    plt.scatter(MG1_sin_WD["Gmag"] - MG1_sin_WD["RPmag"], MG1_sin_WD["Gmag"])
+    plt.gca().invert_yaxis()
+    # g.show()
+    #  print(MG1_sin_WD.shape)
