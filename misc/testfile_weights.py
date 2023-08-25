@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-from Classfile import *
-from pre_processing import CII_df, CII_clusters
+from Extraction.Classfile import *
+from Extraction.pre_processing import CII_df, CII_clusters
 
-import my_utility
+from My_tools import my_utility
 
 """
 Just a short script checking the differences between weighted and unweighted SVR.
 """
 output_path = my_utility.set_output_path()
 
-HP_file = "data/Hyperparameters/Weight_test.csv"
+HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/Weight_test.csv"
 my_utility.setup_HP(HP_file)
 
 sns.set_style("darkgrid")

@@ -1,18 +1,23 @@
 import numpy as np
 import pandas as pd
 
-pd.options.mode.chained_assignment = None
-
 """
 This file holds the function that converts the raw csv input files into pd.DataFrames and only retains the necessary
 columns. It also contains the code that does just this transformation for the 8 different catalogs for the paper so
 that they may just be imported into the various python scripts by their variable name or the variable name of the list.
 """
 
-data_path = "/Users/alena/PycharmProjects/PaperI/"
-
 
 def create_df(filepath, columns, names, quality_filter: dict = None):
+    """
+    Read in and reformat the input data.
+    :param filepath: Path to csv-file
+    :param columns: columns to include in the import
+    :param names: uniform names for the columns on which the code works
+    :param quality_filter: dictionary of additional quality filters. Requires the parameter name (= column name),
+    limit type (upper/lower) and the numerical filter value
+    :return: namelist of all clusters in the dataframe and the formatted dataframe
+    """
     raw_df = pd.read_csv(filepath)
 
     # infer list of cluster names directly from raw data
@@ -35,9 +40,44 @@ def create_df(filepath, columns, names, quality_filter: dict = None):
     return cluster_list, catalog
 
 
-# Archive import
-# ======================================================================================================================
+def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_ref: list = None,
+                         id_col: str = "Cluster_id"):
+    """
+    As often different literature ages are available for the clusters, this function is designed to convert these
+    into a csv-file and (optionally) choose a reference age based on the user input.
+    :param df_list: List of input dataframes (usually corresponding to the different catalogs
+    :param output_path: Location where the new csv-file should be saved
+    :param ref_key: age / av
+    :param master_ref: List of references ordered by their importance. The first will be preferred when chosing the ref
+    age, then the second if the first is a NaN and so on, maximum = 3
+    :param id_col: column containting cluster names or other identifiers
+    :return:
+    """
+    concat_df = pd.concat(df_list, axis=0)
+    concat_df.drop_duplicates(id_col, inplace=True)
+    reference_cols = [id_col] + [col for col in concat_df.columns if ref_key in col]
 
+    # for defining the reference column ad hoc
+    if master_ref:
+        concat_df["ref_{}".format(ref_key)] = np.where(~concat_df[master_ref[0]].isna(), concat_df[master_ref[0]],
+                                                       np.where(~concat_df[master_ref[1]].isna(),
+                                                                concat_df[master_ref[1]], concat_df[master_ref[2]]))
+        reference_cols = ["ref_{}".format(ref_key)] + reference_cols
+
+    # for just grabbing every column that has the keyword in it and creating a new file with them
+    concat_df[reference_cols].to_csv(output_path, mode="w",
+                                     header=True)
+
+
+# test
+# create_reference_csv(df_list=cluster_df_list,
+# output_path="/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv", ref_key="age")
+
+# ----------------------------------------------------------------------------------------------------------------------
+# set path
+data_path = "/Users/alena/PycharmProjects/PaperI/"
+
+# Archive import
 standard_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP", "BP-G",
                  "G-RP"]
 
@@ -51,7 +91,6 @@ cluster_name_list = []
 # ----------------------------------------------------------------------------------------------------------------------
 # Cantat-Gaudin 2020 = CATALOG I
 # ----------------------------------------------------------------------------------------------------------------------
-
 CI_raw = data_path + "data/Cluster_data/all_ages/CatalogI_BCD_ages.csv"
 
 CI_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "Proba", "X", "Y", "Z",
@@ -68,21 +107,18 @@ CI_df["catalog"] = 1
 CI_df["ref_age"] = np.where(~CI_df['age_C'].isna(), CI_df['age_C'],
                             np.where(~CI_df['age_D'].isna(), CI_df['age_D'], CI_df['age_B']))
 
-# print the dataframe
-
 CI_df = CI_df[(CI_df["Cluster_id"] != "IC_348") &
               (CI_df["Cluster_id"] != "L_1641S") &
               (CI_df["Cluster_id"] != "RSG_7")]
 
 CI_clusters_new = CI_df["Cluster_id"].unique()
 
+print(CI_df.columns)
 cluster_df_list.append(CI_df)
 cluster_name_list.append(CI_clusters_new)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # M 2020 Xmatch Gaia EDR3 + errors == CATALOG II
 # ----------------------------------------------------------------------------------------------------------------------
-
 CII_raw = data_path + "data/Cluster_data/all_ages/CatalogII_BCD_ages.csv"
 
 CII_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "X_CG", "Y_CG", "Z"]
@@ -99,11 +135,9 @@ CII_df["ref_age"] = CII_df["age_C"]
 
 cluster_df_list.append(CII_df)
 cluster_name_list.append(CII_clusters)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # new catalogue from Sebastian == CATALOG III
 # ----------------------------------------------------------------------------------------------------------------------
-
 CIII_raw = data_path + "data/Cluster_data/all_ages/CatalogIII_DR3_Sco-Cen-ages-names_ages.csv"
 
 CIII_cols = standard_cols + ["logage_lts", "logage_tdist", "ruwe", "fidelity_v2", "stability", "G_err", "G_BPerr",
@@ -134,7 +168,6 @@ cluster_name_list.append(CIII_clusters_new)
 # ----------------------------------------------------------------------------------------------------------------------
 # Coma Ber (Melotte 111) == ADD-ON I
 # ----------------------------------------------------------------------------------------------------------------------
-
 AOI_raw = data_path + "data/Cluster_data/all_ages/Coma_Ber_CD_ages.csv"
 
 AOI_cols = standard_cols + ["AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "X", "Y", "Z"]
@@ -149,11 +182,9 @@ AOI_df["Nstars"] = len(AOI_df["age_C"])
 
 cluster_df_list.append(AOI_df)
 cluster_name_list.append(AOI_clusters)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Hyades (Melotte 25) == ADD-ON II
 # ----------------------------------------------------------------------------------------------------------------------
-
 AOII_raw = data_path + "data/Cluster_data/all_ages/Hyades_CD_ages.csv"
 
 AOII_cols = standard_cols + ["AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "x", "y", "z"]
@@ -168,11 +199,9 @@ AOII_df["Nstars"] = len(AOII_df["age_C"])
 
 cluster_df_list.append(AOII_df)
 cluster_name_list.append(AOII_clusters)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Meingast 1 == ADD-ON III / CASE STUDY I
 # ----------------------------------------------------------------------------------------------------------------------
-
 AOIII_raw = data_path + "data/Cluster_data/all_ages/Meingast1_stab_24_CuESSIV_ages.csv"
 
 AOIII_cols = standard_cols + ["logage_Curtis", "logage_ESSIV", "RUWE", "Stab", "X", "Y", "Z"]
@@ -207,18 +236,14 @@ AOIV_df["Nstars"] = len(AOIV_df["age_Cu"])
 
 cluster_df_list.append(AOIV_df)
 cluster_name_list.append(AOIV_clusters)
-
 # ======================================================================================================================
-
 # Case studies
 
 case_study_dfs = []
 case_study_names = ["Melotte_22", "IC_4665"]
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Nuria pleiades cluster (DANCe) == CASE STUDY II
 # ----------------------------------------------------------------------------------------------------------------------
-
 CSII_raw = data_path + "data/Cluster_data/all_ages/Pleiades_BCD_ages.csv"
 
 CSII_cols = ["Cluster", "mean_plx", "umag", "e_umag", "gmag", "e_gmag", "rmag", "e_rmag", "imag", "e_imag", "zmag",
@@ -238,11 +263,9 @@ CSII_cluster, CSII_df = create_df(CSII_raw, CSII_cols, CSII_names, q_filter_CSII
 CSII_df["ref_age"] = CSII_df["age_C"]
 
 case_study_dfs.append(CSII_df)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Nuria IC_4665 cluster (DANCe) == CASE STUDY III
 # ----------------------------------------------------------------------------------------------------------------------
-
 CSIII_raw = data_path + "data/Cluster_data/all_ages/IC_4665_BCD_ages.csv"
 
 CSIII_cols = ["Cluster", "median_plx", "g", "e_g", "r", "e_r", "i", "e_i", "z", "e_z", "y", "e_y", "J", "e_J", "H",
@@ -265,73 +288,4 @@ CSIII_df["ref_age"] = CSIII_df["age_C"]
 CSIII_df.replace(float(99), np.nan, inplace=True)
 
 case_study_dfs.append(CSIII_df)
-
-
-# ======================================================================================================================
-
-
-def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_ref: list = None,
-                         id_col: str = "Cluster_id"):
-    concat_df = pd.concat(df_list, axis=0)
-    concat_df.drop_duplicates(id_col, inplace=True)
-    reference_cols = [id_col] + [col for col in concat_df.columns if ref_key in col]
-
-    if master_ref:
-        concat_df["ref_{}".format(ref_key)] = np.where(~concat_df[master_ref[0]].isna(), concat_df[master_ref[0]],
-                                                       np.where(~concat_df[master_ref[1]].isna(),
-                                                                concat_df[master_ref[1]], concat_df[master_ref[2]]))
-        reference_cols = ["ref_{}".format(ref_key)] + reference_cols
-    concat_df[reference_cols].to_csv(output_path, mode="w",
-                                     header=True)
-
-
-create_reference_csv(df_list=cluster_df_list,
-                     output_path="/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv", ref_key="age")
-
-
-# 5. Plot the result
-def WD_filter(df, cols):
-    df["WD"] = 0
-
-    y_col = df[cols[0]].to_numpy()
-    x_col = (df[cols[1]] - df[cols[2]]).to_numpy()
-
-    # Define the linear function
-    intercept = 0.5 * max(y_col)
-    # print(intercept)
-    k = (0.5 * max(y_col) - max(y_col)) / (min(x_col) - 0.5 * max(x_col))
-
-    # print(k)
-
-    def linear_function(k, x, d):
-        return k * x + d
-
-    # Iterate over each point in the array
-    for i, x in enumerate(x_col):
-        y = y_col[i]
-        # Calculate the y value of the linear function at the given x coordinate
-        line_y = linear_function(k, x, intercept)
-        # Compare the y value of the linear function with the y coordinate of the point
-        if y < line_y:
-            pass
-            # print(f"({x}, {y}) is above the line y = 8 - 2.5*x")
-        elif y >= line_y:
-            df["WD"].iloc[i] = 1
-        # print(f"({x}, {y}) is below the line y = {intercept} - {k} *x")
-    res = df[df["WD"] == 0]
-
-    return res
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    # print(cluster_df_list[5].shape)
-
-    MG1_sin_WD = WD_filter(cluster_df_list[5], cols=["Gmag", "Gmag", "RPmag"])
-    g = plt.figure()
-    plt.scatter(cluster_df_list[5]["Gmag"] - cluster_df_list[5]["RPmag"], cluster_df_list[5]["Gmag"])
-    plt.scatter(MG1_sin_WD["Gmag"] - MG1_sin_WD["RPmag"], MG1_sin_WD["Gmag"])
-    plt.gca().invert_yaxis()
-    # g.show()
-    #  print(MG1_sin_WD.shape)
+# ----------------------------------------------------------------------------------------------------------------------

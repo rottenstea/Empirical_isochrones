@@ -1,5 +1,5 @@
-from Classfile import *
-import my_utility
+from Extraction.Classfile import *
+from My_tools import my_utility
 import os
 from joblib import dump, load, Parallel, delayed
 import time
@@ -12,9 +12,9 @@ in an altered fashion (without dump and load), but I keep this script to try out
 if __name__ == "__main__":
 
     # load pre-processing function for my different catalogs
-    from pre_processing import cluster_df_list, cluster_name_list
+    from Extraction.pre_processing import cluster_df_list, cluster_name_list
 
-    HP_file = "data/Hyperparameters/Archive_real.csv"
+    HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/Archive_full.csv"
     my_utility.setup_HP(HP_file)
 
     # if using load and dump it is best to have this folder for the memmaps

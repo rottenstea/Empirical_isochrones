@@ -1,13 +1,9 @@
-import my_utility
-from Classfile import *
+from Extraction.Classfile import *
+from Extraction.pre_processing import cluster_df_list, cluster_name_list, case_study_names, case_study_dfs
 
-from pre_processing import cluster_df_list, cluster_name_list, case_study_names, case_study_dfs
+""" Distance and member statistics"""
 
-main = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Isochrone_Archive/Coding/"
-empirical_iso_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Empirical/"
-output_path = my_utility.set_output_path()
-
-
+# For each catalog
 print("CATALOGS")
 for ncat, catalog in enumerate(cluster_name_list):
     print("Catalog", ncat+1)
@@ -23,9 +19,8 @@ for ncat, catalog in enumerate(cluster_name_list):
     print("Star number")
     print(catalog[np.argmin(N)], "min:", np.min(N), "max:", np.max(N), catalog[np.argmax(N)])
 
-
+# For each case study
 print("CASE STUDIES")
-# for ncat catalog in enumerate(cluster_name_list):
 for ncase, case in enumerate(case_study_names):
     OC = star_cluster(case, case_study_dfs[ncase], catalog_mode=False)
     print(OC.name)
@@ -33,4 +28,3 @@ for ncase, case in enumerate(case_study_names):
     N = OC.Nstars
     print("Distance:", mean_d)
     print("N stars:", N)
-
