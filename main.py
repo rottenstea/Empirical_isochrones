@@ -33,7 +33,7 @@ save_plot = False
 # EXTRACTION ROUTINE
 # ----------------------------------------------------------------------------------------------------------------------
 
-for cluster in Archive_clusters[:4]:
+for cluster in Archive_clusters[6:10]:
 
     # 1. Create a class object for each cluster
     OC = star_cluster(cluster, Archive_df)
@@ -46,8 +46,8 @@ for cluster in Archive_clusters[:4]:
         params = OC.SVR_read_from_file(HP_file)
     except IndexError:
         print(f"No Hyperparameters were found for {OC.name}.")
-        curve, isochrone = OC.curve_extraction(svr_data=OC.PCA_XY, svr_weights = OC.weights,
-                                               svr_predict = OC.PCA_XY[:,0], **kwargs)
+        curve, isochrone = OC.curve_extraction(svr_data=OC.PCA_XY, svr_weights=OC.weights,
+                                               svr_predict=OC.PCA_XY[:, 0], **kwargs)
 
     # 4. Create the robust isochrone and uncertainty border from bootstrapped curves
     n_boot = 100
