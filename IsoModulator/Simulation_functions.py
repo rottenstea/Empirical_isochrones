@@ -5,7 +5,14 @@ import matplotlib.pyplot as plt
 from Extraction.Classfile import star_cluster
 
 
-def apparent_G(M, dist):
+def apparent_G(M: np.array, dist: float) -> np.array:
+    """
+    Function for calculating the apparent magnitude from the absolute magnitude and mean cluster distance.
+
+    :param M: Absolute magnitude
+    :param dist: Mean cluster distance, scalar value
+    :return: array of the apparent magnitudes
+    """
     d = np.empty(shape=len(M))
     d.fill(dist)
     return 5 * np.log10(d) - 5 + M
@@ -13,6 +20,19 @@ def apparent_G(M, dist):
 
 class simulated_CMD:
     def __init__(self, cluster_name: str, isochrone_df: pd.DataFrame, cluster_data_df: pd.DataFrame):
+
+        """
+        ClassObject for simulating a Color-magnitude diagram (CMD) for a given cluster, based on an existing empirical
+        isochrone of the cluster. The original cluster data is required as input as well, as the mean cluster distance
+        is computed for the simulated stars to transform color index and absolute magnitudes into apparent magnitudes.
+
+        :param cluster_name: String indicating the cluster name or label listed in the "Cluster" column of the isochrone
+        dataframe.
+        :param isochrone_df: Dataframe comprising the original empirical isochrones, either provided by the archive or
+        by the user.
+        :param cluster_data_df: Dataframe containing the astrometric and photometric data used for creating the initial
+        isochrone.
+        """
 
         # initialize other stuff
         self.green = None
@@ -41,9 +61,19 @@ class simulated_CMD:
 
         # define cluster object (for distances)
         OC = star_cluster(cluster_name, cluster_data_df)
-        self.mean_distance = np.mean(OC.distance)
+        self.mean_distance = float(np.mean(OC.distance))
 
     def set_CMD_type(self, CMD_type: int):
+
+        """
+        Class method for determining the type of CMD that will be created. Currently set to the Gaia CMD options .
+
+        1) BP-RP vs absolute G
+        2) BP-G vs absolute G
+        3) G-RP vs absolute G
+        :param CMD_type: 1,2 or 3
+        :return: None
+        """
         # calculate apparent G mag
         if CMD_type == 1:
             self.green = apparent_G(self.abs_G_bprp, self.mean_distance)
@@ -64,6 +94,16 @@ class simulated_CMD:
         self.num_simulated_stars = len(self.green)
 
     def add_parallax_uncertainty(self, delta_plx: float):
+
+        """
+        Method for adding parallax uncertainty to the simulated CMD. For each star in the simulated CMD, the original
+        parallax is combined with a relative uncertainty drawn from a normal distribution that has its extrema
+        (99.7 % coverage)nat +/- delta parallax. In the last step, the absolute magnitude is calculated again.
+
+        :param delta_plx: Uncertainty fraction of the parallax.
+        :return: None
+        """
+
         lower_bound = -delta_plx
         upper_bound = delta_plx
 
@@ -80,12 +120,23 @@ class simulated_CMD:
         # add the parallax uncertainties sampled from the normal distribution bounded by delta plx
         new_dist = 1000 / (plx + plx * normal_distribution)
 
-        print(self.mean_distance, np.mean(new_dist), np.std(new_dist), max(new_dist), min(new_dist))
+        # print(self.mean_distance, np.mean(new_dist), np.std(new_dist), max(new_dist), min(new_dist))
 
         # transform to absolute mag again
         self.abs_mag_incl_plx = self.green - 5 * np.log10(new_dist) + 5
 
     def add_binary_fraction(self, binarity_frac: float):
+
+        """
+        Method for adding an artificial unresolved binary fraction to the simulated CMD. For a random fraction of the
+        simulated stars, defined by the parameter binary_frac, the absolute magnitude is increased by -0.753 mag
+        (increase for equal mass main sequence unresolved binaries). Recommended use: After adding parallax
+        uncertainty.
+
+        :param binarity_frac: Fraction of unresolved binaries [0,1].
+        :return: None
+        """
+
         binary_frame = self.abs_mag_incl_plx.copy()
         # Randomly sample 30% of the elements
         sampled_indices = binary_frame.sample(frac=binarity_frac).index
@@ -96,6 +147,18 @@ class simulated_CMD:
         self.abs_mag_incl_plx_binarity = binary_frame
 
     def add_extinction(self, extinction_level: float):
+
+        """
+        Method for adding a constant extinction level to the CMD data in both absolute magnitude and color index. In
+        case of the absolute magnitudes, the extinction level is directly added. In case of the color index, the color
+        excess is calculated by first multiplying the Gaia DR3 extinction coefficients (approximated with Draine+2003,
+        R_V = 3.1 and the assumption of a flat SED) with the extinction level, and then subtracting them.
+        Recommended use: After adding parallax uncertainty and binary fraction.
+
+        :param extinction_level: in Gaia G-band magnitudes (1 AV = 0.789 AG)
+        :return: None
+        """
+
         # make into dataframe
         cluster_df = pd.DataFrame(data=np.stack([self.bp_rp, self.abs_mag_incl_plx_binarity], axis=1),
                                   columns=self.cols)
@@ -113,6 +176,18 @@ class simulated_CMD:
     def add_field_contamination(self, contamination_frac: float,
                                 field_data_path: str =
                                 '/Users/alena/PycharmProjects/PaperI/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv'):
+
+        """
+        Method for adding a specified fraction of field contamination to the cluster CMD from a field data catalog. The
+        data are randomly sampled and converted to the CMD format (color index and absolute magnitude). The field data
+        are then added to the cluster data.
+        Recommended use: After adding parallax uncertainty, binarity fraction and extinction level.
+
+        :param contamination_frac: Fraction of field contamination with respect to the cluster that should be sampled.
+        :param field_data_path: Path to the field data to sample from (default: 1% of Gaia DR3 sources within 500 pc).
+        :return: None
+        """
+
         # load slimmed catalog
         data = pd.read_csv(field_data_path)
 
@@ -142,7 +217,17 @@ class simulated_CMD:
         self.abs_mag_incl_plx_binarity_extinction_field = pd.concat(
             [self.abs_mag_incl_plx_binarity_extinction, field_df[common_columns]], axis=0)
 
-    def simulate(self, uncertainties):
+    def simulate(self, uncertainties: list) -> pd.Dataframe:
+
+        """
+        Method that automatically adds all four implemented uncertainties (parallax, binary fraction, extinction level,
+        field contamination) to the simulated CMD data in the recommended order. A column with the cluster name is also
+        added for further processing steps inside the star_cluster class of the main module.
+
+        :param uncertainties: List of uncertainties in the order: parallax, binary fraction, extinction level,
+        field contamination
+        :return: DataFrame with the final CMD data and the cluster name
+        """
         u_plx, binarity, extinction, field = uncertainties
 
         self.add_parallax_uncertainty(delta_plx=u_plx)
@@ -155,7 +240,16 @@ class simulated_CMD:
 
         return star_cluster_object
 
-    def plot_verification(self, uncertainties):
+    def plot_verification(self, uncertainties: list) -> plt.figure:
+
+        """
+        Method for visually presenting the changes to the initially simulated stars along the original empirical
+        isochrone. Each subplot shows the cluster CMD after the addition of the respective parameter uncertainty.
+
+        :param uncertainties: List of uncertainties in the order: parallax, binary fraction, extinction level,
+        field contamination
+        :return: Figure of the changes brought by the addition of each uncertainty
+        """
         fig, ax = plt.subplots(2, 3, figsize=(8, 6))
         plt.subplots_adjust(top=0.95, left=0.05, right=0.98, hspace=0.23, wspace=0.15, bottom=0.05)
         axes = ax.ravel()
