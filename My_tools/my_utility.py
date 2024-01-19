@@ -9,6 +9,7 @@ main = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Projects/Is
 def set_output_path(main_path: str = main):
     """
     Automatically sets the output directory to a folder named after the current date.
+
     :param main_path: Path to the directory containing the coding-logs
     :return: path-string
     """
@@ -26,6 +27,7 @@ def setup_HP(filepath_and_name: str, name_string: str = None):
     """
     Reading in hyperparameters from the HP file at the given location. Either accepts a
     custom name string, or the one saved as default for more flexibility.
+
     :param filepath_and_name: path to the HP file
     :param name_string: String of csv headings or column names that will be the keys of the HP dictionary
     :return: either reads the file into a dataframe or opens a new one where it writes the name-string

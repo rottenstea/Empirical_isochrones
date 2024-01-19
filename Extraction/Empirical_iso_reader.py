@@ -11,6 +11,7 @@ def build_empirical_df(csv_folder: str, age_file: pd.DataFrame, col_names: list,
     """
     Read in the empirical isochrone and uncertainty bounds for each cluster from separate csv files and knit them into
     a single dataframe. Grabs the files specified by keys or filter functions.
+
     :param csv_folder: Location of the individual result csv-files.
     :param age_file: File containing the reference ages. They will be added to the empirical isochrone information.
     :param col_names: Columns by which the dataframe should be sorted.
@@ -57,7 +58,7 @@ empirical_iso_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Empiri
 reference_ages = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Reference_ages.csv")
 output_path = my_utility.set_output_path()
 
-save_table = False
+save_table = True
 # ----------------------------------------------------------------------------------------------------------------------
 # Result dfs
 
@@ -85,11 +86,14 @@ dfs = []
 for cluster in sorted(ref_ages_mastertable["Cluster_id"]):
 
     # collect the result files for that cluster name
-    csv_list = [file for file in os.listdir(empirical_iso_path) if "{}_G".format(cluster) in file]
+    csv_unsorted = [file for file in os.listdir(empirical_iso_path) if "{}_G".format(cluster) in file]
+
+    # sort the files (has to be done in reverse)
+    sorted_csvs = sorted(csv_unsorted, key=lambda x: ('GRP' in x, 'BPG' in x, 'BPRP' in x))
 
     # make a list of df (three dfs for the three combinations)
     df_list = [pd.read_csv(os.path.join(empirical_iso_path, file)).assign(Cluster_id=cluster) for file in
-               csv_list]
+               sorted_csvs]
 
     # the dfs all have the same column names, for right merging into the mastertable a prefix needs to be added to them
     bands = ["BPRP_", "BPG_", "GRP_"]
@@ -123,5 +127,6 @@ mastertable.columns = official_names
 
 # save the table
 if save_table:
-    mastertable.to_csv(output_path + "Mastertable_Archive.csv", mode="w", header=True)
+    mastertable.to_csv("/Users/alena/PycharmProjects/PaperI/data/Isochrones/Mastertable_Archive.csv",
+                       mode="w", header=True)
 # ----------------------------------------------------------------------------------------------------------------------

@@ -11,6 +11,7 @@ that they may just be imported into the various python scripts by their variable
 def create_df(filepath, columns, names, quality_filter: dict = None):
     """
     Read in and reformat the input data.
+
     :param filepath: Path to csv-file
     :param columns: columns to include in the import
     :param names: uniform names for the columns on which the code works
@@ -45,6 +46,7 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
     """
     As often different literature ages are available for the clusters, this function is designed to convert these
     into a csv-file and (optionally) choose a reference age based on the user input.
+
     :param df_list: List of input dataframes (usually corresponding to the different catalogs
     :param output_path: Location where the new csv-file should be saved
     :param ref_key: age / av
@@ -75,7 +77,7 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
 
 # ----------------------------------------------------------------------------------------------------------------------
 # set path
-data_path = "/Users/alena/PycharmProjects/PaperI/"
+data_path = "//"
 
 # Archive import
 standard_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP", "BP-G",
@@ -113,7 +115,7 @@ CI_df = CI_df[(CI_df["Cluster_id"] != "IC_348") &
 
 CI_clusters_new = CI_df["Cluster_id"].unique()
 
-print(CI_df.columns)
+# print(CI_df.columns)
 cluster_df_list.append(CI_df)
 cluster_name_list.append(CI_clusters_new)
 # ----------------------------------------------------------------------------------------------------------------------
@@ -263,6 +265,8 @@ CSII_cluster, CSII_df = create_df(CSII_raw, CSII_cols, CSII_names, q_filter_CSII
 CSII_df["ref_age"] = CSII_df["age_C"]
 
 case_study_dfs.append(CSII_df)
+
+# print("Pleiades:", CSII_df.shape)
 # ----------------------------------------------------------------------------------------------------------------------
 # Nuria IC_4665 cluster (DANCe) == CASE STUDY III
 # ----------------------------------------------------------------------------------------------------------------------
@@ -278,7 +282,7 @@ CSIII_names = ["Cluster_id", "plx", "gmag", "e_gmag", "rmag", "e_rmag", "imag", 
                "Jmag", "e_Jmag", "Hmag", "e_Hmag", "Kmag", "e_Kmag",
                "age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "probability"]
 
-q_filter_CSIII = {"parameter": ["probability"], "limit": ["lower", "lower"], "value": [0.5, 9]}
+q_filter_CSIII = {"parameter": ["probability", "rmag"], "limit": ["lower", "lower"], "value": [0.5, 9]}
 
 CSIII_cluster, CSIII_df = create_df(CSIII_raw, CSIII_cols, CSIII_names, q_filter_CSIII)
 
@@ -288,4 +292,6 @@ CSIII_df["ref_age"] = CSIII_df["age_C"]
 CSIII_df.replace(float(99), np.nan, inplace=True)
 
 case_study_dfs.append(CSIII_df)
+
+# print("IC 4665:", CSIII_df.shape)
 # ----------------------------------------------------------------------------------------------------------------------

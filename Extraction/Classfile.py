@@ -17,6 +17,7 @@ def abs_mag_error(w: float, delta_w: float, delta_m: float):
     """
     Root sum of squares for the absolute magnitude. The first term is the derivation of the distance term in the
     distance modulus.
+
     :param w: Parallax value
     :param delta_w: Parallax error
     :param delta_m: Apparent magnitude error
@@ -41,9 +42,11 @@ class star_cluster(object):
         """
         Initiation function of the cluster object. Takes a minimum amount of input parameters, namely only the cluster
         identifier for extracting the right part from the big dataframe and the dataframe itself.
+
         :param name: Cluster name or identifier. Should not include escape characters
         :param catalog: Input dataframe with standardized columns (from pre-processing).
         :param dataset_id: Unique identifier of the dataset, as more than one dataset may exist for one cluster.
+        :return: object
         """
 
         # Optional: slashes in clusternames are causing problems (CATALOG III)
@@ -58,7 +61,7 @@ class star_cluster(object):
 
         # Catalog identifier is needed as multiple datasets may exist for the same clusters.
         # It tags the hyperparameter file.
-        if dataset_id:
+        if dataset_id is not None:
             self.dataset_id = dataset_id
         else:
             try:
@@ -103,6 +106,7 @@ class star_cluster(object):
     def create_CMD(self, CMD_params: list = None, return_errors: bool = False, no_errors: bool = False):
         """
         Create cluster CMD and calculate 1D errors for each datapoint in the scatterplot.
+
         :param CMD_params: Variables spanning the CMD. Can be either three filters or one filter and one color index. Y
                            mag before cax in the list.
         :param return_errors: If set to true, a list of all calculated errors (raw and CMD errors) is returned.
@@ -175,10 +179,45 @@ class star_cluster(object):
             print("The 'no_errors' flag is activated. All weights for the SVR will be set to one.")
             self.weights = np.ones(self.N_CMD)
 
+    def create_CMD_quick_n_dirty(self, CMD_params, no_errors: bool = True):
+
+        self.CMD_specs = dict(axes=CMD_params, filters=[CMD_params[0], CMD_params[1].split("-")[0] + "mag",
+                                                        CMD_params[1].split("-")[1] + "mag"],
+                              short=CMD_params[0].replace("mag", "") + "_" + CMD_params[1].replace("-", ""))
+
+        # remove nans
+        #abs_mag = self.data[CMD_params[1]]
+        #cax = self.data[CMD_params[0]]
+
+        arr = self.data[[CMD_params[1], CMD_params[0]]].to_numpy()
+
+        nan_idxes = np.isnan(arr).any(axis=1)
+        cleaned_arr = arr[~nan_idxes]
+
+        # sort the cleaned array along the yaxis
+        sort_idxes = cleaned_arr[:, 1].argsort()
+        sorted_arr = cleaned_arr[sort_idxes]
+
+        # set the star_cluster attributes
+        self.CMD = sorted_arr
+        self.N_CMD = len(sorted_arr)
+        self.pca = PCA(n_components=2)
+        self.PCA_XY = self.pca.fit_transform(sorted_arr)
+        self.density_x, self.density_y, self.kwargs_CMD = CMD_density_design([self.CMD[:, 0], self.CMD[:, 1]],
+                                                                             density_plot=False)
+
+        # compute weights
+        if not no_errors:
+            self.create_weights(sorting_ids=sort_idxes, nan_ids=nan_idxes)
+        else:
+            print("The 'no_errors' flag is activated. All weights for the SVR will be set to one.")
+            self.weights = np.ones(self.N_CMD)
+
     def create_weights(self, sorting_ids: np.ndarray, nan_ids: np.ndarray, plx_or_d_cols: list = None,
                        return_deltas: bool = False):
         """
         Calculate a one-dimensional, scalar weight value for each datapoint in the CMD that will be considered in SVR.
+
         :param sorting_ids: Sort the error columns of the raw data in the same manner as was done for the CMD.
         :param nan_ids: Clean the errors in all columns if a NaN was encountered in one of the CMD columns.
         :param plx_or_d_cols: List of column names for the distance / plx values and errors.
@@ -246,6 +285,7 @@ class star_cluster(object):
                                search_function=None, rkf_function=None):
         """
         Perform the hyperparameter gridsearch with 5-fold cross-validation and return the optimized parameters.
+
         :param X_train: Training data for the first parameter.
         :param Y_train: Training data for the second parameter.
         :param grid: Dictionary containing the grid points that should be evaluated for the three hyperparameters.
@@ -283,6 +323,7 @@ class star_cluster(object):
     def SVR_read_from_file(self, file: str):
         """
         Read in the tuned hyperparameters for the specific cluster dataset from the file holding all hyperparameters.
+
         :param file: Location of the file holding the hyperparameters (csv).
         :return: Dictionary of hyperparameters
         """
@@ -308,6 +349,7 @@ class star_cluster(object):
         hyperparameter file with the specifiers for the cluster, dataset and CMD. As the function is itself called by
         the curve_extraction function, the input_array and weight_data parameters should not be set to object
         attributes.
+
         :param input_array: 2D input data
         :param weight_data: 1D weight data
         :param output_file: Path to the csv file for collecting all hyperparameters.
@@ -368,16 +410,13 @@ class star_cluster(object):
         Read in hyperparameters if possible, else call the SVR_hyperparameter_tuning function. Then calculate the
         regression curve using the hyperparameters for the svr_data (original or bootstrapped array) and transform
         the result back into the CMD space.
+
         :param svr_data: Array to be subjected to regression. Either original PCA data or bootstrapped data
         :param HP_file: Path to the csv file containing the hyperparameters (same as in SVR_read_from_file)
-        :param svr_predict: Array used for the prediction, i.e. the array upon which the regression will be done after
-                            training the model. If the svr_data is an array of bootstrapped values, the prediction still
-                             needs to be performed on the original X data, otherwise the confidence borders will not be
-                             smooth
+        :param svr_predict: Array used for the prediction, i.e. the array upon which the regression will be done after training the model. If the svr_data is an array of bootstrapped values, the prediction still needs to be performed on the original X data, otherwise the confidence borders will not be smooth
         :param svr_weights: Array containing the weight data, either original or bootstrapped
         :param grid: Dictionary of custom grid if wanted
-        :param always_tune: Flag that forces the algorithm to tune the hyperparameters, even if data already exists in
-                            the HP file
+        :param always_tune: Flag that forces the algorithm to tune the hyperparameters, even if data already exists in the HP file
         :return: PCA curve and isochrone
         """
 
@@ -417,6 +456,7 @@ class star_cluster(object):
         """
         Function that runs in parallel and computes bootstrapped datasets which it passes to the curve_extraction
         routine to produce resampled isochrones. Then it stores the results at the given index in the output array.
+
         :param idx: Bootstrapping index passed by the parallel function that allocates the location in the output
                     array where the results will be saved for the current resampling
         :param output: Dataframe for collecting all resampling results that are computed in parallel
@@ -455,6 +495,7 @@ class star_cluster(object):
         The original dataset is provided to the resampling function, which is called in parallel processing and its
         results are stored in the output array defined here. From this array the median and 5th/95th percentile curves
         are calculated.
+
         :param n_resample: Number of resampled isochrones to generate (typically 100 - 1000)
         :param original_array: Array that should be used for bootstrapping and resampling
         :param original_weights: Weights corresponding to this array
