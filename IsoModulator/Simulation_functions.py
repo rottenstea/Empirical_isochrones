@@ -20,7 +20,6 @@ def apparent_G(M: np.array, dist: float) -> np.array:
 
 class simulated_CMD:
     def __init__(self, cluster_name: str, isochrone_df: pd.DataFrame, cluster_data_df: pd.DataFrame):
-
         """
         ClassObject for simulating a Color-magnitude diagram (CMD) for a given cluster, based on an existing empirical
         isochrone of the cluster. The original cluster data is required as input as well, as the mean cluster distance
@@ -64,13 +63,12 @@ class simulated_CMD:
         self.mean_distance = float(np.mean(OC.distance))
 
     def set_CMD_type(self, CMD_type: int):
-
         """
-        Class method for determining the type of CMD that will be created. Currently set to the Gaia CMD options .
-
+        Class method for determining the type of CMD that will be created. Currently set to the Gaia CMD options.
         1) BP-RP vs absolute G
         2) BP-G vs absolute G
         3) G-RP vs absolute G
+
         :param CMD_type: 1,2 or 3
         :return: None
         """
@@ -94,7 +92,6 @@ class simulated_CMD:
         self.num_simulated_stars = len(self.green)
 
     def add_parallax_uncertainty(self, delta_plx: float):
-
         """
         Method for adding parallax uncertainty to the simulated CMD. For each star in the simulated CMD, the original
         parallax is combined with a relative uncertainty drawn from a normal distribution that has its extrema
@@ -126,7 +123,6 @@ class simulated_CMD:
         self.abs_mag_incl_plx = self.green - 5 * np.log10(new_dist) + 5
 
     def add_binary_fraction(self, binarity_frac: float):
-
         """
         Method for adding an artificial unresolved binary fraction to the simulated CMD. For a random fraction of the
         simulated stars, defined by the parameter binary_frac, the absolute magnitude is increased by -0.753 mag
@@ -147,7 +143,6 @@ class simulated_CMD:
         self.abs_mag_incl_plx_binarity = binary_frame
 
     def add_extinction(self, extinction_level: float):
-
         """
         Method for adding a constant extinction level to the CMD data in both absolute magnitude and color index. In
         case of the absolute magnitudes, the extinction level is directly added. In case of the color index, the color
@@ -176,7 +171,6 @@ class simulated_CMD:
     def add_field_contamination(self, contamination_frac: float,
                                 field_data_path: str =
                                 '/Users/alena/PycharmProjects/PaperI/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv'):
-
         """
         Method for adding a specified fraction of field contamination to the cluster CMD from a field data catalog. The
         data are randomly sampled and converted to the CMD format (color index and absolute magnitude). The field data
@@ -217,15 +211,13 @@ class simulated_CMD:
         self.abs_mag_incl_plx_binarity_extinction_field = pd.concat(
             [self.abs_mag_incl_plx_binarity_extinction, field_df[common_columns]], axis=0)
 
-    def simulate(self, uncertainties: list) -> pd.Dataframe:
-
+    def simulate(self, uncertainties: list) -> pd.DataFrame:
         """
         Method that automatically adds all four implemented uncertainties (parallax, binary fraction, extinction level,
         field contamination) to the simulated CMD data in the recommended order. A column with the cluster name is also
         added for further processing steps inside the star_cluster class of the main module.
 
-        :param uncertainties: List of uncertainties in the order: parallax, binary fraction, extinction level,
-        field contamination
+        :param uncertainties: List of uncertainties in the order: parallax, binary fraction, extinction level, field contamination
         :return: DataFrame with the final CMD data and the cluster name
         """
         u_plx, binarity, extinction, field = uncertainties
@@ -241,13 +233,11 @@ class simulated_CMD:
         return star_cluster_object
 
     def plot_verification(self, uncertainties: list) -> plt.figure:
-
         """
         Method for visually presenting the changes to the initially simulated stars along the original empirical
         isochrone. Each subplot shows the cluster CMD after the addition of the respective parameter uncertainty.
 
-        :param uncertainties: List of uncertainties in the order: parallax, binary fraction, extinction level,
-        field contamination
+        :param uncertainties: List of uncertainties in the order: parallax, binary fraction, extinction level, field contamination
         :return: Figure of the changes brought by the addition of each uncertainty
         """
         fig, ax = plt.subplots(2, 3, figsize=(8, 6))
