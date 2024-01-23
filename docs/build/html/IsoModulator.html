@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Isochrone Modulator &mdash; Empirical Isochrone archive 1.0.0 documentation</title>
+  <title>IsoModulator &mdash; Empirical Isochrone archive 1.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -20,8 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Isochrone simulation functions" href="Simulation_functions.html" />
-    <link rel="prev" title="Classfile" href="Classfile.html" /> 
+    <link rel="prev" title="Utility tools" href="My_tools.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,13 +44,12 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="my_utility.html">Utility functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plotting_essentials.html">Basic plotting functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="My_tools.html">My Tools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Classfile.html">Classfile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Extraction.html">StarCluster Classfile</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Simulation_functions.html">Isochrone simulation functions</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Isochrone Modulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="My_tools.html">Utility tools</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IsoModulator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simulated-cmd-class">Simulated_CMD class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further-functions">Further functions</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -68,7 +66,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Isochrone Modulator</li>
+      <li class="breadcrumb-item active">IsoModulator</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/IsoModulator.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -79,37 +77,50 @@
            <div itemprop="articleBody">
              
   <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="Simulation_functions.html">Isochrone simulation functions</a></li>
-</ul>
 </div>
-<section id="isochrone-modulator">
-<h1>Isochrone Modulator<a class="headerlink" href="#isochrone-modulator" title="Permalink to this heading"></a></h1>
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">IsoModulator.Simulation_functions.</span></span><span class="sig-name descname"><span class="pre">apparent_G</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">array</span></span></span></dt>
-<dd><p>Function for calculating the apparent magnitude from the absolute magnitude and mean cluster distance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>M</strong> – Absolute magnitude</p></li>
-<li><p><strong>dist</strong> – Mean cluster distance, scalar value</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>array of the apparent magnitudes</p>
+<section id="isomodulator">
+<h1>IsoModulator<a class="headerlink" href="#isomodulator" title="Permalink to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">IsoModulator</span></code> module contains the <code class="docutils literal notranslate"><span class="pre">Simulated_CMD</span></code> class, as well as further supplementary functions. The <code class="docutils literal notranslate"><span class="pre">Simulated_CMD</span></code> class is
+allows users to provide a sample empirical isochrone as well as uncertainty values for the parameters:</p>
+<ol class="arabic simple">
+<li><p>parallax</p></li>
+<li><p>unresolved binary fraction</p></li>
+<li><p>field contamination fraction</p></li>
+<li><p>extinction level</p></li>
+</ol>
+<p>Based on the input values and the position of the provided isochrone, a CMD is simulated and a new isochrone is calculated.</p>
+<section id="simulated-cmd-class">
+<h2>Simulated_CMD class<a class="headerlink" href="#simulated-cmd-class" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>Input</dt><dd><p>Cluster name or identifier, empirical isochrone data, cluster CMD data</p>
 </dd>
 </dl>
-</dd></dl>
-
+<p>Lelele.</p>
 <dl class="py class">
-<dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">IsoModulator.Simulation_functions.</span></span><span class="sig-name descname"><span class="pre">simulated_CMD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isochrone_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_data_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.IsoModulator.Simulation_functions.</span></span><span class="sig-name descname"><span class="pre">simulated_CMD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isochrone_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_data_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">add_binary_fraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binarity_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isochrone_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_data_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>ClassObject for simulating a Color-magnitude diagram (CMD) for a given cluster, based on an existing empirical
+isochrone of the cluster. The original cluster data is required as input as well, as the mean cluster distance
+is computed for the simulated stars to transform color index and absolute magnitudes into apparent magnitudes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cluster_name</strong> – String indicating the cluster name or label listed in the “Cluster” column of the isochrone</p>
+</dd>
+</dl>
+<p>dataframe.
+:param isochrone_df: Dataframe comprising the original empirical isochrones, either provided by the archive or
+by the user.
+:param cluster_data_df: Dataframe containing the astrometric and photometric data used for creating the initial
+isochrone.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_binary_fraction">
+<span class="sig-name descname"><span class="pre">add_binary_fraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binarity_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_binary_fraction" title="Permalink to this definition"></a></dt>
 <dd><p>Method for adding an artificial unresolved binary fraction to the simulated CMD. For a random fraction of the
 simulated stars, defined by the parameter binary_frac, the absolute magnitude is increased by -0.753 mag
 (increase for equal mass main sequence unresolved binaries). Recommended use: After adding parallax
@@ -125,8 +136,8 @@ uncertainty.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">add_extinction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extinction_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_extinction">
+<span class="sig-name descname"><span class="pre">add_extinction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extinction_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_extinction" title="Permalink to this definition"></a></dt>
 <dd><p>Method for adding a constant extinction level to the CMD data in both absolute magnitude and color index. In
 case of the absolute magnitudes, the extinction level is directly added. In case of the color index, the color
 excess is calculated by first multiplying the Gaia DR3 extinction coefficients (approximated with Draine+2003,
@@ -143,8 +154,8 @@ Recommended use: After adding parallax uncertainty and binary fraction.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">add_field_contamination</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">contamination_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'/Users/alena/PycharmProjects/PaperI/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv'</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_field_contamination">
+<span class="sig-name descname"><span class="pre">add_field_contamination</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">contamination_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'/Users/alena/PycharmProjects/PaperI/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_field_contamination" title="Permalink to this definition"></a></dt>
 <dd><p>Method for adding a specified fraction of field contamination to the cluster CMD from a field data catalog. The
 data are randomly sampled and converted to the CMD format (color index and absolute magnitude). The field data
 are then added to the cluster data.
@@ -163,8 +174,8 @@ Recommended use: After adding parallax uncertainty, binarity fraction and extinc
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">add_parallax_uncertainty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_plx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_parallax_uncertainty">
+<span class="sig-name descname"><span class="pre">add_parallax_uncertainty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_plx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.add_parallax_uncertainty" title="Permalink to this definition"></a></dt>
 <dd><p>Method for adding parallax uncertainty to the simulated CMD. For each star in the simulated CMD, the original
 parallax is combined with a relative uncertainty drawn from a normal distribution that has its extrema
 (99.7 % coverage)nat +/- delta parallax. In the last step, the absolute magnitude is calculated again.</p>
@@ -179,8 +190,8 @@ parallax is combined with a relative uncertainty drawn from a normal distributio
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">plot_verification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">figure</span></span></span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.plot_verification">
+<span class="sig-name descname"><span class="pre">plot_verification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">figure</span></span></span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.plot_verification" title="Permalink to this definition"></a></dt>
 <dd><p>Method for visually presenting the changes to the initially simulated stars along the original empirical
 isochrone. Each subplot shows the cluster CMD after the addition of the respective parameter uncertainty.</p>
 <dl class="field-list simple">
@@ -194,9 +205,9 @@ isochrone. Each subplot shows the cluster CMD after the addition of the respecti
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">set_CMD_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">CMD_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span></dt>
-<dd><p>Class method for determining the type of CMD that will be created. Currently set to the Gaia CMD options .
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.set_CMD_type">
+<span class="sig-name descname"><span class="pre">set_CMD_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">CMD_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.set_CMD_type" title="Permalink to this definition"></a></dt>
+<dd><p>Class method for determining the type of CMD that will be created. Currently set to the Gaia CMD options.
 1) BP-RP vs absolute G
 2) BP-G vs absolute G
 3) G-RP vs absolute G</p>
@@ -211,8 +222,8 @@ isochrone. Each subplot shows the cluster CMD after the addition of the respecti
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.simulate">
+<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncertainties</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD.simulate" title="Permalink to this definition"></a></dt>
 <dd><p>Method that automatically adds all four implemented uncertainties (parallax, binary fraction, extinction level,
 field contamination) to the simulated CMD data in the recommended order. A column with the cluster name is also
 added for further processing steps inside the star_cluster class of the main module.</p>
@@ -229,13 +240,34 @@ added for further processing steps inside the star_cluster class of the main mod
 </dd></dl>
 
 </section>
+<section id="further-functions">
+<h2>Further functions<a class="headerlink" href="#further-functions" title="Permalink to this heading"></a></h2>
+<p>Subsidiary functions called by the <code class="docutils literal notranslate"><span class="pre">Simulated_CMD</span></code> class object.</p>
+<span class="target" id="module-EmpiricalArchive.IsoModulator.Simulation_functions"></span><dl class="py function">
+<dt class="sig sig-object py" id="EmpiricalArchive.IsoModulator.Simulation_functions.apparent_G">
+<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.IsoModulator.Simulation_functions.</span></span><span class="sig-name descname"><span class="pre">apparent_G</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">array</span></span></span><a class="headerlink" href="#EmpiricalArchive.IsoModulator.Simulation_functions.apparent_G" title="Permalink to this definition"></a></dt>
+<dd><p>Function for calculating the apparent magnitude from the absolute magnitude and mean cluster distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> – Absolute magnitude</p></li>
+<li><p><strong>dist</strong> – Mean cluster distance, scalar value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>array of the apparent magnitudes</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="Classfile.html" class="btn btn-neutral float-left" title="Classfile" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Simulation_functions.html" class="btn btn-neutral float-right" title="Isochrone simulation functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="My_tools.html" class="btn btn-neutral float-left" title="Utility tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

@@ -3,7 +3,6 @@
    :caption: Contents:
 
    My_tools.rst
-   Extraction.rst
    IsoModulator.rst
 
 
@@ -22,25 +21,15 @@ Indices and tables
 ``my_tools`` Module
 ===================
 
-.. automodule:: My_tools
+.. automodule:: EmpiricalArchive.My_tools
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-``Extraction`` Module
-=====================
-
-.. automodule:: Extraction
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 ``Isomodulator`` Module
 =======================
 
-.. automodule:: IsoModulator
+.. automodule:: EmpiricalArchive.IsoModulator
    :members:
    :undoc-members:
    :show-inheritance:
