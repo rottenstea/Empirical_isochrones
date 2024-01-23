@@ -77,7 +77,7 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
 
 # ----------------------------------------------------------------------------------------------------------------------
 # set path
-data_path = "/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/"
+data_path = "//"
 
 # Archive import
 standard_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP", "BP-G",

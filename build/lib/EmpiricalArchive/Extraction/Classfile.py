@@ -139,7 +139,7 @@ class star_cluster(object):
                 cax = p1 - p2
                 self.CMD_specs = dict(
                     axes=[CMD_params[0],
-                          str(CMD_params[1].replace("mag", "-") + CMD_params[2].replace("mag", ""))],
+                          str(CMD_params[1].replace("mag", " - ") + CMD_params[2].replace("mag", ""))],
                     filters=CMD_params,
                     short=CMD_params[0].replace("mag", "_") + CMD_params[1].replace("mag", "") + CMD_params[2].
                     replace("mag", ""))

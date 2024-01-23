@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: PaperI
+Version: 0.0.1
+Summary: A package for empirical isochrones.
+Author-email: Alena Rottensteiner <alena.kristina.rottensteiner@univie.ac.at>
+Project-URL: Homepage, https://github.com/rottenstea/Empirical_isochrones
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: astropy>=5.1
+Requires-Dist: joblib>=1.2.0
+Requires-Dist: pandas>=1.5.1
+Requires-Dist: matplotlib~=3.5.3
+Requires-Dist: numpy>=1.23.4
+Requires-Dist: plotly>=5.9.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: scikit-learn>=1.1.3
+Requires-Dist: seaborn>=0.12.1
