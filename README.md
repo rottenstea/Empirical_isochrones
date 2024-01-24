@@ -1,7 +1,7 @@
 [![Documentation Status](https://readthedocs.org/projects/empirical-isochrones/badge/?version=latest)](https://empirical-isochrones.readthedocs.io/en/latest/?badge=latest)
 
 
-# IsoModulator
+# IsoModulator --
 
 ## Description
 
