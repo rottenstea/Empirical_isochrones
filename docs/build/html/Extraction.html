@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extraction &mdash; Empirical Isochrone archive 1.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="IsoModulator" href="IsoModulator.html" />
+    <link rel="prev" title="Utility tools" href="My_tools.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Empirical Isochrone archive
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="My_tools.html">Utility tools</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extraction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#star-cluster-class"><code class="docutils literal notranslate"><span class="pre">star_cluster</span> <span class="pre">class</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further-star-cluster-functions">Further <code class="docutils literal notranslate"><span class="pre">star_cluster</span></code> functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#empirical-isochrone-reader">Empirical isochrone reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-processing">Pre-processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="IsoModulator.html">IsoModulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IsoModulator-Examples.html">IsoModulator example</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Empirical Isochrone archive</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Extraction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Extraction.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="toctree-wrapper compound">
+</div>
+<section id="extraction">
+<h1>Extraction<a class="headerlink" href="#extraction" title="Permalink to this heading"></a></h1>
+<section id="star-cluster-class">
+<h2><code class="docutils literal notranslate"><span class="pre">star_cluster</span> <span class="pre">class</span></code><a class="headerlink" href="#star-cluster-class" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>Input</dt><dd><p>Cluster identifier, photometry and parallax observations</p>
+</dd>
+</dl>
+<p>A <code class="docutils literal notranslate"><span class="pre">star_cluster</span></code> instance is created from the input data. For this object, various methods are available for performing the various pre-processing and computation steps
+necessary for the full pipeline of the isochrone extraction. In short, the workflow is as follows:</p>
+<ol class="arabic simple">
+<li><p>Compute a Color-Magnitude diagram and transform it using Principal Component Analysis <code class="docutils literal notranslate"><span class="pre">star_cluster.create_CMD</span></code> (quick ‘n’ dirty version available as well).</p></li>
+<li><p>Create a weight-map from the observation uncertainties <code class="docutils literal notranslate"><span class="pre">star_cluster.create_weights</span></code>.</p></li>
+<li><p>Tune hyperparameters for Support Vector regression and save the best results <code class="docutils literal notranslate"><span class="pre">star_cluster.SVR_Hyperparameter_tuning</span></code> and <code class="docutils literal notranslate"><span class="pre">gridsearch_and_ranking</span></code>.</p></li>
+<li><p>In case the hyperparameters have already been determined: <code class="docutils literal notranslate"><span class="pre">star_cluster.SVR_read_from_file</span></code>.</p></li>
+<li><p>Extract a single empirical curve <code class="docutils literal notranslate"><span class="pre">star_cluster.curve_extraction</span></code>.</p></li>
+<li><p>Resample a large number of curves from bootstrapped cluster data <code class="docutils literal notranslate"><span class="pre">star_cluster.resample_curve</span></code>.</p></li>
+<li><p>Calculate the median and uncertainty bounds <code class="docutils literal notranslate"><span class="pre">star_cluster.interval_stats</span></code>.</p></li>
+</ol>
+<p>The last three steps can be called simuntaneously using the <code class="docutils literal notranslate"><span class="pre">star_cluster.isochrone_and_intervals</span></code> method.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.Classfile.</span></span><span class="sig-name descname"><span class="pre">star_cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">catalog</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.SVR_Hyperparameter_tuning">
+<span class="sig-name descname"><span class="pre">SVR_Hyperparameter_tuning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.SVR_Hyperparameter_tuning" title="Permalink to this definition"></a></dt>
+<dd><p>Tuning of the SVR hyperparameter. Takes the 2D input data along with an 1D weight array, stacks them and calls
+the gridsearch_and_ranking function. After the tuning is finished, the results are written into the global
+hyperparameter file with the specifiers for the cluster, dataset and CMD. As the function is itself called by
+the curve_extraction function, the input_array and weight_data parameters should not be set to object
+attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_array</strong> – 2D input data</p></li>
+<li><p><strong>weight_data</strong> – 1D weight data</p></li>
+<li><p><strong>output_file</strong> – Path to the csv file for collecting all hyperparameters.</p></li>
+<li><p><strong>grid</strong> – (Optional) Dictionary with a custom hyperparameter grid for the gridsearch_and_ranking function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dictionary of HP parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.SVR_read_from_file">
+<span class="sig-name descname"><span class="pre">SVR_read_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.SVR_read_from_file" title="Permalink to this definition"></a></dt>
+<dd><p>Read in the tuned hyperparameters for the specific cluster dataset from the file holding all hyperparameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file</strong> – Location of the file holding the hyperparameters (csv).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary of hyperparameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">catalog</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initiation function of the cluster object. Takes a minimum amount of input parameters, namely only the cluster
+identifier for extracting the right part from the big dataframe and the dataframe itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Cluster name or identifier. Should not include escape characters</p></li>
+<li><p><strong>catalog</strong> – Input dataframe with standardized columns (from pre-processing).</p></li>
+<li><p><strong>dataset_id</strong> – Unique identifier of the dataset, as more than one dataset may exist for one cluster.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.create_CMD">
+<span class="sig-name descname"><span class="pre">create_CMD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">CMD_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_errors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_errors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.create_CMD" title="Permalink to this definition"></a></dt>
+<dd><p>Create cluster CMD and calculate 1D errors for each datapoint in the scatterplot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>CMD_params</strong> – Variables spanning the CMD. Can be either three filters or one filter and one color index. Y
+mag before cax in the list.</p></li>
+<li><p><strong>return_errors</strong> – If set to true, a list of all calculated errors (raw and CMD errors) is returned.</p></li>
+<li><p><strong>no_errors</strong> – If set to true, the create_weights function will not be engaged and all weights will be set
+to one.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Optional: Error list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.create_CMD_quick_n_dirty">
+<span class="sig-name descname"><span class="pre">create_CMD_quick_n_dirty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">CMD_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_errors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.create_CMD_quick_n_dirty" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.create_weights">
+<span class="sig-name descname"><span class="pre">create_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sorting_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nan_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plx_or_d_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_deltas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.create_weights" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate a one-dimensional, scalar weight value for each datapoint in the CMD that will be considered in SVR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sorting_ids</strong> – Sort the error columns of the raw data in the same manner as was done for the CMD.</p></li>
+<li><p><strong>nan_ids</strong> – Clean the errors in all columns if a NaN was encountered in one of the CMD columns.</p></li>
+<li><p><strong>plx_or_d_cols</strong> – List of column names for the distance / plx values and errors.</p></li>
+<li><p><strong>return_deltas</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.curve_extraction">
+<span class="sig-name descname"><span class="pre">curve_extraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">svr_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">HP_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">svr_predict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">svr_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">always_tune</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.curve_extraction" title="Permalink to this definition"></a></dt>
+<dd><p>Read in hyperparameters if possible, else call the SVR_hyperparameter_tuning function. Then calculate the
+regression curve using the hyperparameters for the svr_data (original or bootstrapped array) and transform
+the result back into the CMD space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>svr_data</strong> – Array to be subjected to regression. Either original PCA data or bootstrapped data</p></li>
+<li><p><strong>HP_file</strong> – Path to the csv file containing the hyperparameters (same as in SVR_read_from_file)</p></li>
+<li><p><strong>svr_predict</strong> – Array used for the prediction, i.e. the array upon which the regression will be done after training the model. If the svr_data is an array of bootstrapped values, the prediction still needs to be performed on the original X data, otherwise the confidence borders will not be smooth</p></li>
+<li><p><strong>svr_weights</strong> – Array containing the weight data, either original or bootstrapped</p></li>
+<li><p><strong>grid</strong> – Dictionary of custom grid if wanted</p></li>
+<li><p><strong>always_tune</strong> – Flag that forces the algorithm to tune the hyperparameters, even if data already exists in the HP file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PCA curve and isochrone</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.gridsearch_and_ranking">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gridsearch_and_ranking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_train</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y_train</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_train</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rkf_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.gridsearch_and_ranking" title="Permalink to this definition"></a></dt>
+<dd><p>Perform the hyperparameter gridsearch with 5-fold cross-validation and return the optimized parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_train</strong> – Training data for the first parameter.</p></li>
+<li><p><strong>Y_train</strong> – Training data for the second parameter.</p></li>
+<li><p><strong>grid</strong> – Dictionary containing the grid points that should be evaluated for the three hyperparameters.</p></li>
+<li><p><strong>weight_train</strong> – 1D scalar weights for the SVR.</p></li>
+<li><p><strong>rkf_function</strong> – Fully defined function determining the cross-validation method (default: 5-fold)</p></li>
+<li><p><strong>search_function</strong> – Gridsearch function
+(default: GridsearchCV, Alternatives e.g., BayesSearchCV, HalvingGridsearchCV)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parameters and test scores in the form of a dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.interval_stats">
+<span class="sig-name descname"><span class="pre">interval_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_resample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_array</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">njobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.interval_stats" title="Permalink to this definition"></a></dt>
+<dd><p>The original dataset is provided to the resampling function, which is called in parallel processing and its
+results are stored in the output array defined here. From this array the median and 5th/95th percentile curves
+are calculated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_resample</strong> – Number of resampled isochrones to generate (typically 100 - 1000)</p></li>
+<li><p><strong>original_array</strong> – Array that should be used for bootstrapping and resampling</p></li>
+<li><p><strong>original_weights</strong> – Weights corresponding to this array</p></li>
+<li><p><strong>njobs</strong> – Number of parallel jobs</p></li>
+<li><p><strong>kwargs</strong> – Passing kwargs for the other functions in the function tree (= grid dict and always_tune flag)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Empirical isochrone and 5/95 perc bounds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.isochrone_and_intervals">
+<span class="sig-name descname"><span class="pre">isochrone_and_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_boot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.isochrone_and_intervals" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_boot</strong> – Number of resamplings</p></li>
+<li><p><strong>data</strong> – Array that should be resampled</p></li>
+<li><p><strong>weights</strong> – Corresponding weights</p></li>
+<li><p><strong>parallel_jobs</strong> – Number of parallel jobs</p></li>
+<li><p><strong>output_loc</strong> – Path to the directory where the result should be saved</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to be passed to other functions in the function tree
+(= grid dict and always_tune flag)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataframe containing the empirical isochrone and the uncertainty bounds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.star_cluster.resample_curves">
+<span class="sig-name descname"><span class="pre">resample_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.star_cluster.resample_curves" title="Permalink to this definition"></a></dt>
+<dd><p>Function that runs in parallel and computes bootstrapped datasets which it passes to the curve_extraction
+routine to produce resampled isochrones. Then it stores the results at the given index in the output array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> – Bootstrapping index passed by the parallel function that allocates the location in the output
+array where the results will be saved for the current resampling</p></li>
+<li><p><strong>output</strong> – Dataframe for collecting all resampling results that are computed in parallel</p></li>
+<li><p><strong>sampling_array</strong> – Array from which to bootstrap (Default: self.PCA_XY)</p></li>
+<li><p><strong>sampling_weights</strong> – Weights belonging to the sampling array (Default: self.weights)</p></li>
+<li><p><strong>kwargs</strong> – passes grid and “always_tune” flag command through to curve_extraction</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Write output in the output file at the assigned index</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="further-star-cluster-functions">
+<h2>Further <code class="docutils literal notranslate"><span class="pre">star_cluster</span></code> functions<a class="headerlink" href="#further-star-cluster-functions" title="Permalink to this heading"></a></h2>
+<p>Subsidiary functions called by the <code class="docutils literal notranslate"><span class="pre">star_cluster</span></code> class object.</p>
+<span class="target" id="module-EmpiricalArchive.Extraction.Classfile"></span><dl class="py function">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.RSS">
+<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.Classfile.</span></span><span class="sig-name descname"><span class="pre">RSS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.RSS" title="Permalink to this definition"></a></dt>
+<dd><p>General root sum of squares formula.
+:param e1: Error of variable 1
+:param e2: Error of variable 2
+:return: float</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Classfile.abs_mag_error">
+<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.Classfile.</span></span><span class="sig-name descname"><span class="pre">abs_mag_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_w</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_m</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Classfile.abs_mag_error" title="Permalink to this definition"></a></dt>
+<dd><p>Root sum of squares for the absolute magnitude. The first term is the derivation of the distance term in the
+distance modulus.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w</strong> – Parallax value</p></li>
+<li><p><strong>delta_w</strong> – Parallax error</p></li>
+<li><p><strong>delta_m</strong> – Apparent magnitude error</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="empirical-isochrone-reader">
+<h2>Empirical isochrone reader<a class="headerlink" href="#empirical-isochrone-reader" title="Permalink to this heading"></a></h2>
+<p>Function for reading in the empirical isochrones saved for each cluster and for creating a master-table containing
+all results for the empirical Archive.</p>
+<span class="target" id="module-EmpiricalArchive.Extraction.Empirical_iso_reader"></span><dl class="py function">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.Empirical_iso_reader.build_empirical_df">
+<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.Empirical_iso_reader.</span></span><span class="sig-name descname"><span class="pre">build_empirical_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">age_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_split</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.Empirical_iso_reader.build_empirical_df" title="Permalink to this definition"></a></dt>
+<dd><p>Read in the empirical isochrone and uncertainty bounds for each cluster from separate csv files and knit them into
+a single dataframe. Grabs the files specified by keys or filter functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csv_folder</strong> – Location of the individual result csv-files.</p></li>
+<li><p><strong>age_file</strong> – File containing the reference ages. They will be added to the empirical isochrone information.</p></li>
+<li><p><strong>col_names</strong> – Columns by which the dataframe should be sorted.</p></li>
+<li><p><strong>name_split</strong> – String upon which to split the filename to assign the cluster name to the respective isochrone.</p></li>
+<li><p><strong>filename_key</strong> – String that needs to be included in the filename, e.g. catalog number or CMD combi.</p></li>
+<li><p><strong>filename_exclude</strong> – Files with this string will not be included in the dataframe. Opposite of filename_key.</p></li>
+<li><p><strong>filter_function</strong> – User-given function that one can apply to the list of dataframes and that gives out an
+updated list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="pre-processing">
+<h2>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this heading"></a></h2>
+<p>Function that converts the raw .csv input files into pd.DataFrames and only retains the necessary
+columns. It is automatically called to do this transformation for 8 different catalogs in the main script, so
+that they may just be imported into the various python scripts by their variable name or the variable name of the list.</p>
+<span class="target" id="module-EmpiricalArchive.Extraction.pre_processing"></span><dl class="py function">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.pre_processing.create_df">
+<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.pre_processing.</span></span><span class="sig-name descname"><span class="pre">create_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.pre_processing.create_df" title="Permalink to this definition"></a></dt>
+<dd><p>Read in and reformat the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filepath</strong> – Path to csv-file</p></li>
+<li><p><strong>columns</strong> – columns to include in the import</p></li>
+<li><p><strong>names</strong> – uniform names for the columns on which the code works</p></li>
+<li><p><strong>quality_filter</strong> – dictionary of additional quality filters. Requires the parameter name (= column name), limit type (upper/lower) and the numerical filter value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>namelist of all clusters in the dataframe and the formatted dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.pre_processing.create_reference_csv">
+<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.pre_processing.</span></span><span class="sig-name descname"><span class="pre">create_reference_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">master_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Cluster_id'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.pre_processing.create_reference_csv" title="Permalink to this definition"></a></dt>
+<dd><p>As often different literature ages are available for the clusters, this function is designed to convert these
+into a csv-file and (optionally) choose a reference age based on the user input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_list</strong> – List of input dataframes (usually corresponding to the different catalogs</p></li>
+<li><p><strong>output_path</strong> – Location where the new csv-file should be saved</p></li>
+<li><p><strong>ref_key</strong> – age / av</p></li>
+<li><p><strong>master_ref</strong> – List of references ordered by their importance. The first will be preferred when chosing the ref age, then the second if the first is a NaN and so on, maximum = 3</p></li>
+<li><p><strong>id_col</strong> – column containting cluster names or other identifiers</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="My_tools.html" class="btn btn-neutral float-left" title="Utility tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="IsoModulator.html" class="btn btn-neutral float-right" title="IsoModulator" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Alena Rottensteiner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

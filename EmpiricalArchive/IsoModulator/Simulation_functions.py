@@ -25,12 +25,9 @@ class simulated_CMD:
         isochrone of the cluster. The original cluster data is required as input as well, as the mean cluster distance
         is computed for the simulated stars to transform color index and absolute magnitudes into apparent magnitudes.
 
-        :param cluster_name: String indicating the cluster name or label listed in the "Cluster" column of the isochrone
-        dataframe.
-        :param isochrone_df: Dataframe comprising the original empirical isochrones, either provided by the archive or
-        by the user.
-        :param cluster_data_df: Dataframe containing the astrometric and photometric data used for creating the initial
-        isochrone.
+        :param cluster_name: String indicating the cluster name or label listed in the "Cluster" column of the isochrone dataframe.
+        :param isochrone_df: Dataframe comprising the original empirical isochrones, either provided by the archive or by the user.
+        :param cluster_data_df: Dataframe containing the astrometric and photometric data used for creating the initial isochrone.
         """
 
         # initialize other stuff

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to My Project’s Documentation! &mdash; Empirical Isochrone archive 1.0.0 documentation</title>
+  <title>Welcome to EmpiricalArchive’s Documentation! &mdash; Empirical Isochrone archive 1.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
@@ -45,7 +45,9 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="My_tools.html">Utility tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Extraction.html">Extraction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="IsoModulator.html">IsoModulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IsoModulator-Examples.html">IsoModulator example</a></li>
 </ul>
 
         </div>
@@ -62,7 +64,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Welcome to My Project’s Documentation!</li>
+      <li class="breadcrumb-item active">Welcome to EmpiricalArchive’s Documentation!</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -80,16 +82,34 @@
 <li class="toctree-l2"><a class="reference internal" href="My_tools.html#basic-plotting-functions">Basic plotting functions</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="Extraction.html">Extraction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Extraction.html#star-cluster-class"><code class="docutils literal notranslate"><span class="pre">star_cluster</span> <span class="pre">class</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="Extraction.html#further-star-cluster-functions">Further <code class="docutils literal notranslate"><span class="pre">star_cluster</span></code> functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Extraction.html#empirical-isochrone-reader">Empirical isochrone reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Extraction.html#pre-processing">Pre-processing</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="IsoModulator.html">IsoModulator</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="IsoModulator.html#simulated-cmd-class">Simulated_CMD class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator.html#simulated-cmd-class"><code class="docutils literal notranslate"><span class="pre">simulated_CMD</span> <span class="pre">class</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="IsoModulator.html#further-functions">Further functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="IsoModulator-Examples.html">IsoModulator example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#preliminary-setup">Preliminary setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#set-paths">set paths</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#define-parameter-uncertainty-values">1. Define parameter uncertainty values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#initialize-class-object">2. Initialize class object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#add-uncertainties-and-plot-the-result">3. Add uncertainties and plot the result</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#calculate-the-new-isochrone">4. Calculate the new isochrone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#plot-the-result">5. Plot the result</a></li>
+<li class="toctree-l2"><a class="reference internal" href="IsoModulator-Examples.html#calculate-the-difference-between-the-curves">6. Calculate the difference between the curves</a></li>
 </ul>
 </li>
 </ul>
 </div>
-<section id="welcome-to-my-project-s-documentation">
-<h1>Welcome to My Project’s Documentation!<a class="headerlink" href="#welcome-to-my-project-s-documentation" title="Permalink to this heading"></a></h1>
-<p>This is the main documentation for My Project.</p>
+<section id="welcome-to-empiricalarchive-s-documentation">
+<h1>Welcome to EmpiricalArchive’s Documentation!<a class="headerlink" href="#welcome-to-empiricalarchive-s-documentation" title="Permalink to this heading"></a></h1>
+<p>This is the main documentation for the EmpiricalArchive for generating purely observation-based isochrones for nearby open clusters.</p>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h1>
@@ -99,11 +119,27 @@
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </section>
-<section id="module-EmpiricalArchive.My_tools">
-<span id="my-tools-module"></span><h1><code class="docutils literal notranslate"><span class="pre">my_tools</span></code> Module<a class="headerlink" href="#module-EmpiricalArchive.My_tools" title="Permalink to this heading"></a></h1>
-</section>
-<section id="module-EmpiricalArchive.IsoModulator">
-<span id="isomodulator-module"></span><h1><code class="docutils literal notranslate"><span class="pre">Isomodulator</span></code> Module<a class="headerlink" href="#module-EmpiricalArchive.IsoModulator" title="Permalink to this heading"></a></h1>
+<section id="my-tools-module">
+<h1><code class="docutils literal notranslate"><span class="pre">my_tools</span></code> Module<a class="headerlink" href="#my-tools-module" title="Permalink to this heading"></a></h1>
+<p>Collection of small utility and plotting functions vital for core functionality of the code.</p>
+<span class="target" id="module-EmpiricalArchive.My_tools"></span></section>
+<section id="extraction-module">
+<h1><code class="docutils literal notranslate"><span class="pre">Extraction</span></code> Module<a class="headerlink" href="#extraction-module" title="Permalink to this heading"></a></h1>
+<p>Centerpiece of the code, responsible for the generation of empirical isochrones, from pre-processing of the observational data, extraction and bootstrapping of
+isochrones in every desired Color-magnitude combination, to storing the results and creating summary tables.</p>
+<span class="target" id="module-EmpiricalArchive.Extraction"></span></section>
+<section id="isomodulator-module">
+<h1><code class="docutils literal notranslate"><span class="pre">Isomodulator</span></code> Module<a class="headerlink" href="#isomodulator-module" title="Permalink to this heading"></a></h1>
+<p>Module for computing the influence of various parameter uncertainties (edge cases) on the shape of the cluster CMD distribution and therefore on the reported empirical isochrones.
+It mainly serves as a quantification for the reliability of the observation-based isochronal curves.</p>
+<span class="target" id="module-EmpiricalArchive.IsoModulator"></span><dl class="field-list simple">
+<dt class="field-odd">Author(s)<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Alena Rottensteiner</p>
+</dd>
+<dt class="field-even">Version<span class="colon">:</span></dt>
+<dd class="field-even"><p>1.0.0 of 2024/01/20</p>
+</dd>
+</dl>
 </section>
 
 
