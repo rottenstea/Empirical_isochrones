@@ -5,7 +5,7 @@
    My_tools.rst
    Extraction.rst
    IsoModulator.rst
-   IsoModulator-Examples.md
+   Examples.md
 
 
 Welcome to EmpiricalArchive's Documentation!

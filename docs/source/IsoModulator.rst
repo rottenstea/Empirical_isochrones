@@ -13,8 +13,6 @@ allows users to provide a sample empirical isochrone as well as uncertainty valu
 4. extinction level
 
 Based on the input values and the position of the provided isochrone, a CMD is simulated and a new isochrone is calculated. 
-Examples for the use of the listed functions can be found in the Examples_ section.
-
 
 ``simulated_CMD class``
 -----------------------

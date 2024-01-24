@@ -12,7 +12,7 @@ allows users to provide a sample empirical isochrone as well as uncertainty valu
 3. field contamination fraction
 4. extinction level
 
-Based on the input values and the position of the provided isochrone, a CMD is simulated and a new isochrone is calculated.
+Based on the input values and the position of the provided isochrone, a CMD is simulated and a new isochrone is calculated. 
 
 ``simulated_CMD class``
 -----------------------
