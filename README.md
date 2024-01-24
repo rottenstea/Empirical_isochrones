@@ -1,3 +1,6 @@
+[![Documentation Status](https://readthedocs.org/projects/empirical-isochrones/badge/?version=latest)](https://empirical-isochrones.readthedocs.io/en/latest/?badge=latest)
+
+
 # IsoModulator
 
 ## Description
@@ -47,7 +50,8 @@ package.
 
 ## Documentation
 
-The documentation for the project is provided via `Sphinx` and will be hosted via ReadTheDocs soon.
+The documentation for the project is provided via `Sphinx` and hosted via [ReadTheDocs](empirical-isochrones.readthedocs.io
+empirical-isochrones.rtfd.io).
 
 ## License
 
