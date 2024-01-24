@@ -28,6 +28,7 @@ EmpiricalArchive/Plotting/plot_extinction.py
 EmpiricalArchive/Plotting/plot_histograms.py
 EmpiricalArchive/Plotting/plot_hyperparameters.py
 EmpiricalArchive/Plotting/plot_masterplot.py
+EmpiricalArchive/Plotting/plot_simpleCMD.py
 EmpiricalArchive/Plotting/plot_spatial_distribution.py
 EmpiricalArchive/Plotting/plot_subplot_matrix.py
 EmpiricalArchive/Plotting/xplot_CI-CII_comparison.py

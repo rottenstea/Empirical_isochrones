@@ -15,14 +15,14 @@ def test_apparent_G():
     M = np.array([7.0])  # mag
     dist = 100.0  # pc
     result = apparent_G(M, dist)
-    expected_result = np.array([12])  # Replace this with the expected result for the given inputs
+    expected_result = np.array([12])
     assert np.allclose(result, expected_result), f"Test case 1 failed. Got {result}, expected {expected_result}"
 
     # Test case 2: Check if the function handles arrays correctly
     M = np.array([-3.0, 3.0, 17.0])
     dist = 100.0
     result = apparent_G(M, dist)
-    expected_result = np.array([2, 8, 22])  # Replace this with the expected result for the given inputs
+    expected_result = np.array([2, 8, 22])
     assert np.allclose(result, expected_result), f"Test case 2 failed. Got {result}, expected {expected_result}"
 
 
@@ -104,4 +104,4 @@ def test_set_CMD_type_invalid(initialized_class_object):
     with pytest.raises(ValueError, match="CMD-type can only be 1, 2, or 3."):
         obj.set_CMD_type(4)
 
-# Run the tests by executing 'pytest' in your terminal
+

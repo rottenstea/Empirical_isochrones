@@ -13,6 +13,9 @@ def apparent_G(M: np.array, dist: float) -> np.array:
     :param dist: Mean cluster distance, scalar value
     :return: array of the apparent magnitudes
     """
+    if dist < 0:
+        raise ValueError("Mean cluster distance must be greater than 0.")
+
     d = np.empty(shape=len(M))
     d.fill(dist)
     return 5 * np.log10(d) - 5 + M
@@ -56,7 +59,7 @@ class simulated_CMD:
         self.g_rp = self.cluster_data["GRP_isochrone_x"]
 
         # define cluster object (for distances)
-        OC = star_cluster(cluster_name, cluster_data_df)
+        OC = star_cluster(cluster_name, cluster_data_df, dataset_id="1")
         self.mean_distance = float(np.mean(OC.distance))
 
     def set_CMD_type(self, CMD_type: int):
@@ -69,6 +72,9 @@ class simulated_CMD:
         :param CMD_type: 1,2 or 3
         :return: None
         """
+        if (CMD_type < 1) or (CMD_type > 3):
+            raise ValueError("CMD-type can only be 1, 2, or 3.")
+
         # calculate apparent G mag
         if CMD_type == 1:
             self.green = apparent_G(self.abs_G_bprp, self.mean_distance)
