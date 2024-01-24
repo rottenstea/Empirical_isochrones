@@ -15,8 +15,7 @@ def create_df(filepath, columns, names, quality_filter: dict = None):
     :param filepath: Path to csv-file
     :param columns: columns to include in the import
     :param names: uniform names for the columns on which the code works
-    :param quality_filter: dictionary of additional quality filters. Requires the parameter name (= column name),
-    limit type (upper/lower) and the numerical filter value
+    :param quality_filter: dictionary of additional quality filters. Requires the parameter name (= column name), limit type (upper/lower) and the numerical filter value
     :return: namelist of all clusters in the dataframe and the formatted dataframe
     """
     raw_df = pd.read_csv(filepath)
@@ -50,8 +49,7 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
     :param df_list: List of input dataframes (usually corresponding to the different catalogs
     :param output_path: Location where the new csv-file should be saved
     :param ref_key: age / av
-    :param master_ref: List of references ordered by their importance. The first will be preferred when chosing the ref
-    age, then the second if the first is a NaN and so on, maximum = 3
+    :param master_ref: List of references ordered by their importance. The first will be preferred when chosing the ref age, then the second if the first is a NaN and so on, maximum = 3
     :param id_col: column containting cluster names or other identifiers
     :return:
     """
@@ -80,7 +78,8 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
 data_path = "/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/"
 
 # Archive import
-standard_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP", "BP-G",
+standard_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP",
+                 "BP-G",
                  "G-RP"]
 
 standard_names = ["Cluster_id", "plx", "e_plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP",
@@ -95,10 +94,12 @@ cluster_name_list = []
 # ----------------------------------------------------------------------------------------------------------------------
 CI_raw = data_path + "data/Cluster_data/all_ages/CatalogI_BCD_ages.csv"
 
-CI_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "Proba", "X", "Y", "Z",
+CI_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "Proba", "X", "Y",
+                           "Z",
                            "N", "Plx_DR2", "Gmag_DR2", "BP-RP_DR2", "E(BP/RP)"]
 
-CI_names = standard_names + ["age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "probability", "x", "y", "z",
+CI_names = standard_names + ["age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "probability", "x", "y",
+                             "z",
                              "Nstars", "plx_DR2", "Gmag_DR2", "BP-RP_DR2", "excess"]
 
 q_filter_I = {"parameter": ["ruwe", "plx", "probability"], "limit": ["upper", "lower", "lower"],
@@ -123,7 +124,8 @@ cluster_name_list.append(CI_clusters_new)
 # ----------------------------------------------------------------------------------------------------------------------
 CII_raw = data_path + "data/Cluster_data/all_ages/CatalogII_BCD_ages.csv"
 
-CII_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "X_CG", "Y_CG", "Z"]
+CII_cols = standard_cols + ["logA_B", "AV_B", "AgeNN_CG", "AVNN_CG", "logage_D", "Av_D", "RUWE", "X_CG", "Y_CG",
+                            "Z"]
 
 CII_names = standard_names + ["age_B", "av_B", "age_C", "av_C", "age_D", "av_D", "ruwe", "x", "y", "z"]
 
@@ -145,7 +147,8 @@ CIII_raw = data_path + "data/Cluster_data/all_ages/CatalogIII_DR3_Sco-Cen-ages-n
 CIII_cols = standard_cols + ["logage_lts", "logage_tdist", "ruwe", "fidelity_v2", "stability", "G_err", "G_BPerr",
                              "G_RPerr", "X", "Y", "Z", "plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
 
-CIII_names = standard_names + ["age_lts", "age_tdist", "ruwe", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr",
+CIII_names = standard_names + ["age_lts", "age_tdist", "ruwe", "fidelity", "stability", "G_err", "G_BPerr",
+                               "G_RPerr",
                                "x", "y", "z", "plx_DR2", "Gmag_DR2", "BP-RP_DR2"]
 
 q_filter_III = {"parameter": ["ruwe", "plx", "fidelity", "stability", "G_err", "G_BPerr", "G_RPerr"],

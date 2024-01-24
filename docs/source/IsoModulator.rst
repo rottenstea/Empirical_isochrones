@@ -4,7 +4,7 @@
 IsoModulator
 ============
 
-The ``IsoModulator`` module contains the ``Simulated_CMD`` class, as well as further supplementary functions. The ``Simulated_CMD`` class is
+The ``IsoModulator`` module contains the ``simulated_CMD`` class, as well as further supplementary functions. The ``simulated_CMD`` class is
 allows users to provide a sample empirical isochrone as well as uncertainty values for the parameters:
 
 1. parallax
@@ -12,15 +12,25 @@ allows users to provide a sample empirical isochrone as well as uncertainty valu
 3. field contamination fraction
 4. extinction level
 
-Based on the input values and the position of the provided isochrone, a CMD is simulated and a new isochrone is calculated.
+Based on the input values and the position of the provided isochrone, a CMD is simulated and a new isochrone is calculated. 
+Examples for the use of the listed functions can be found in the Examples_ section.
 
-Simulated_CMD class
--------------------
+
+``simulated_CMD class``
+-----------------------
 
 Input
-   Cluster name or identifier, empirical isochrone data, cluster CMD data
+   Cluster name or identifier, empirical isochrone, cluster CMD data
 
-Lelele.
+Using the input data, a class object is generated. It consists of *N_clustermembers* synthetic stars placed along the originally calculated empirical isochrone, which
+are assumed to reside at the mean cluster distance. After determining the ``simulated_CMD.CMD_type()``, where
+
+- 1: Gaia *BP-RP vs. absG*
+- 2: Gaia *BP-G vs. absG*
+- 3: Gaia *G-RP vs. absG*,
+
+the parameter uncertainties can be added iteratively to the synthetic star data. Using the method ``simulated_CMD.simulate()``, a new isochrone is computed using the
+normal ``Extraction`` routine, and can be compared to the original one using various metrics.
 
 .. autoclass:: EmpiricalArchive.IsoModulator.Simulation_functions.simulated_CMD
    :members:

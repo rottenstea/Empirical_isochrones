@@ -52,81 +52,82 @@ def build_empirical_df(csv_folder: str, age_file: pd.DataFrame, col_names: list,
     return results_and_age_df
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# set paths
-empirical_iso_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Empirical/"
-reference_ages = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Reference_ages.csv")
-output_path = my_utility.set_output_path()
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------------------------------------------------------
+    # set paths
+    empirical_iso_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Empirical/"
+    reference_ages = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Reference_ages.csv")
+    output_path = my_utility.set_output_path()
 
-save_table = True
-# ----------------------------------------------------------------------------------------------------------------------
-# Result dfs
+    save_table = True
+    # ----------------------------------------------------------------------------------------------------------------------
+    # Result dfs
 
-# Set general kwargs for most of the files
-general_kwargs = dict(csv_folder=empirical_iso_path, age_file=reference_ages, col_names=["ref_age", "m_y"],
-                      name_split="_G")
+    # Set general kwargs for most of the files
+    general_kwargs = dict(csv_folder=empirical_iso_path, age_file=reference_ages, col_names=["ref_age", "m_y"],
+                          name_split="_G")
 
-# create general result dfs for the passband combinations
-merged_BPRP = build_empirical_df(filename_key="G_BPRP_nboot_1000", **general_kwargs)  # BP - RP
-merged_BPG = build_empirical_df(filename_key="G_BPG_nboot_1000", **general_kwargs)  # BP - G
-merged_GRP = build_empirical_df(filename_key="G_GRP_nboot_1000", **general_kwargs)  # G - RP
-# ----------------------------------------------------------------------------------------------------------------------
-# Mastertable Gaia
+    # create general result dfs for the passband combinations
+    merged_BPRP = build_empirical_df(filename_key="G_BPRP_nboot_1000", **general_kwargs)  # BP - RP
+    merged_BPG = build_empirical_df(filename_key="G_BPG_nboot_1000", **general_kwargs)  # BP - G
+    merged_GRP = build_empirical_df(filename_key="G_GRP_nboot_1000", **general_kwargs)  # G - RP
+    # ----------------------------------------------------------------------------------------------------------------------
+    # Mastertable Gaia
 
-# exclude the MG1 ESS 2 case study from the age_reference file
-ref_ages_mastertable = reference_ages[reference_ages["Cluster_id"] != "Meingast_1_ESSII"]
+    # exclude the MG1 ESS 2 case study from the age_reference file
+    ref_ages_mastertable = reference_ages[reference_ages["Cluster_id"] != "Meingast_1_ESSII"]
 
-# only use cluster identifier and reference age column
-ref_ages_mastertable = ref_ages_mastertable[["Cluster_id", "ref_age"]]
+    # only use cluster identifier and reference age column
+    ref_ages_mastertable = ref_ages_mastertable[["Cluster_id", "ref_age"]]
 
-# list for collecting dfs
-dfs = []
+    # list for collecting dfs
+    dfs = []
 
-# iterate through the clusters in the age reference df
-for cluster in sorted(ref_ages_mastertable["Cluster_id"]):
+    # iterate through the clusters in the age reference df
+    for cluster in sorted(ref_ages_mastertable["Cluster_id"]):
 
-    # collect the result files for that cluster name
-    csv_unsorted = [file for file in os.listdir(empirical_iso_path) if "{}_G".format(cluster) in file]
+        # collect the result files for that cluster name
+        csv_unsorted = [file for file in os.listdir(empirical_iso_path) if "{}_G".format(cluster) in file]
 
-    # sort the files (has to be done in reverse)
-    sorted_csvs = sorted(csv_unsorted, key=lambda x: ('GRP' in x, 'BPG' in x, 'BPRP' in x))
+        # sort the files (has to be done in reverse)
+        sorted_csvs = sorted(csv_unsorted, key=lambda x: ('GRP' in x, 'BPG' in x, 'BPRP' in x))
 
-    # make a list of df (three dfs for the three combinations)
-    df_list = [pd.read_csv(os.path.join(empirical_iso_path, file)).assign(Cluster_id=cluster) for file in
-               sorted_csvs]
+        # make a list of df (three dfs for the three combinations)
+        df_list = [pd.read_csv(os.path.join(empirical_iso_path, file)).assign(Cluster_id=cluster) for file in
+                   sorted_csvs]
 
-    # the dfs all have the same column names, for right merging into the mastertable a prefix needs to be added to them
-    bands = ["BPRP_", "BPG_", "GRP_"]
-    renamed_list = []
+        # the dfs all have the same column names, for right merging into the mastertable a prefix needs to be added to them
+        bands = ["BPRP_", "BPG_", "GRP_"]
+        renamed_list = []
 
-    for idx, df in enumerate(df_list):
+        for idx, df in enumerate(df_list):
 
-        # rename all columns but the identifier
-        df = df.iloc[:, [1, 2, 3, 4, 5, 6]]
-        df_renamed = df.add_prefix(bands[idx])
-        renamed_list.append(df_renamed)
+            # rename all columns but the identifier
+            df = df.iloc[:, [1, 2, 3, 4, 5, 6]]
+            df_renamed = df.add_prefix(bands[idx])
+            renamed_list.append(df_renamed)
 
-    # concat the three dataframes
-    all_passbands_df = pd.concat(renamed_list, axis=1)
+        # concat the three dataframes
+        all_passbands_df = pd.concat(renamed_list, axis=1)
 
-    # insert the identifier column again at index zero
-    all_passbands_df.insert(0, "Cluster_id", cluster)
+        # insert the identifier column again at index zero
+        all_passbands_df.insert(0, "Cluster_id", cluster)
 
-    # add the concatenated dataframe for the cluster instance to the df list
-    dfs.append(all_passbands_df)
+        # add the concatenated dataframe for the cluster instance to the df list
+        dfs.append(all_passbands_df)
 
-# create the mastertable from the dataframes for all Gaia clusters
-mastertable_dfs = pd.concat(dfs, ignore_index=True)
-mastertable = pd.merge(mastertable_dfs, ref_ages_mastertable, on='Cluster_id')
+    # create the mastertable from the dataframes for all Gaia clusters
+    mastertable_dfs = pd.concat(dfs, ignore_index=True)
+    mastertable = pd.merge(mastertable_dfs, ref_ages_mastertable, on='Cluster_id')
 
-# rename the columns
-official_names = ['Cluster', 'BPRP_lb_x', 'BPRP_lb_y', 'BPRP_isochrone_x', 'BPRP_isochrone_y', 'BPRP_ub_x', 'BPRP_ub_y',
-                  'BPG_lb_x', 'BPG_lb_y', 'BPG_isochrone_x', 'BPG_isochrone_y', 'BPG_ub_x', 'BPG_ub_y',
-                  'GRP_lb_x', 'GRP_lb_y', 'GRP_isochrone_x', 'GRP_isochrone_y', 'GRP_ub_x', 'GRP_ub_y', 'ref_age']
-mastertable.columns = official_names
+    # rename the columns
+    official_names = ['Cluster', 'BPRP_lb_x', 'BPRP_lb_y', 'BPRP_isochrone_x', 'BPRP_isochrone_y', 'BPRP_ub_x', 'BPRP_ub_y',
+                      'BPG_lb_x', 'BPG_lb_y', 'BPG_isochrone_x', 'BPG_isochrone_y', 'BPG_ub_x', 'BPG_ub_y',
+                      'GRP_lb_x', 'GRP_lb_y', 'GRP_isochrone_x', 'GRP_isochrone_y', 'GRP_ub_x', 'GRP_ub_y', 'ref_age']
+    mastertable.columns = official_names
 
-# save the table
-if save_table:
-    mastertable.to_csv("/Users/alena/PycharmProjects/PaperI/data/Isochrones/Mastertable_Archive.csv",
-                       mode="w", header=True)
-# ----------------------------------------------------------------------------------------------------------------------
+    # save the table
+    if save_table:
+        mastertable.to_csv("/Users/alena/PycharmProjects/PaperI/data/Isochrones/Mastertable_Archive.csv",
+                           mode="w", header=True)
+    # ----------------------------------------------------------------------------------------------------------------------

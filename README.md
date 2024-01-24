@@ -47,7 +47,7 @@ package.
 
 ## Documentation
 
-The documentation for the project is provided via `Sphinx` and can be found [here](docs/build/html/index.html).
+The documentation for the project is provided via `Sphinx` and will be hosted via ReadTheDocs soon.
 
 ## License
 
