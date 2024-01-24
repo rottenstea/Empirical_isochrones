@@ -52,7 +52,7 @@ It mainly serves as a quantification for the reliability of the observation-base
    :undoc-members:
    :show-inheritance:
 
-*EmpiricalArchive* has its documentation hosted on Read The Docs.
+*EmpiricalArchive* has its documentation hosted online on Read The Docs.
 
 :Author(s):
     Alena Rottensteiner
