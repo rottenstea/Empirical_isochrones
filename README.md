@@ -50,8 +50,7 @@ package.
 
 ## Documentation
 
-The documentation for the project is provided via `Sphinx` and hosted via [ReadTheDocs](empirical-isochrones.readthedocs.io
-empirical-isochrones.rtfd.io).
+The documentation for the project is provided via `Sphinx` and hosted via [ReadTheDocs](https://empirical-isochrones.readthedocs.io/en/latest/).
 
 ## License
 
