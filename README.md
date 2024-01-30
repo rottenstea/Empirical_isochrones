@@ -1,6 +1,6 @@
 [![Documentation Status](https://readthedocs.org/projects/empirical-isochrones/badge/?version=latest)](https://empirical-isochrones.readthedocs.io/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/rottenstea/Empirical_isochrones/graph/badge.svg?token=ZCGZXD1A6R)](https://codecov.io/gh/rottenstea/Empirical_isochrones)
 
-# IsoModulator
+# IsoModulator --
 
 ## Description
 
