@@ -3,10 +3,13 @@ import pytest
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
+import os
 
 sys.path.append('/Users/alena/PycharmProjects/PaperI/')
+file_path = os.path.join(os.path.dirname(__file__), 'Gaia_DR3_500pc_1percent.csv')
 
 from EmpiricalArchive.IsoModulator.Simulation_functions import apparent_G, simulated_CMD
+from EmpiricalArchive.Extraction.Classfile import RSS, abs_mag_error
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -205,10 +208,10 @@ def test_add_field_unallowed_vals(initialized_class_object):
     obj = initialized_class_object
     binarity_frac = -0.1
     with pytest.raises(ValueError, match="Fraction needs to be between 0 and 1."):
-        obj.add_field_contamination(binarity_frac)
+        obj.add_field_contamination(binarity_frac, field_data_path=file_path)
     binarity_frac = 1.1
     with pytest.raises(ValueError, match="Fraction needs to be between 0 and 1."):
-        obj.add_field_contamination(binarity_frac)
+        obj.add_field_contamination(binarity_frac, field_data_path=file_path)
 
 
 def test_add_field_contamination_sampling(initialized_class_object):
@@ -219,7 +222,7 @@ def test_add_field_contamination_sampling(initialized_class_object):
     obj.add_parallax_uncertainty(0.1)
     obj.add_binary_fraction(0.3)
     obj.add_extinction(0.5)
-    obj.add_field_contamination(contamination_frac)
+    obj.add_field_contamination(contamination_frac, field_data_path=file_path)
 
     # Check if the correct number of entries is sampled
     assert (len(obj.abs_mag_incl_plx_binarity_extinction_field["Gmag"]) -
@@ -234,7 +237,7 @@ def test_add_field_contamination_conversion(initialized_class_object):
     obj.add_parallax_uncertainty(0.1)
     obj.add_binary_fraction(0.3)
     obj.add_extinction(0.5)
-    obj.add_field_contamination(contamination_frac)
+    obj.add_field_contamination(contamination_frac, field_data_path=file_path)
 
     # Check if the conversion is done correctly for the sampled field data
     assert all(col in obj.abs_mag_incl_plx_binarity_extinction_field.columns
@@ -250,7 +253,7 @@ def test_add_field_contamination_merging(initialized_class_object):
     obj.add_parallax_uncertainty(0.1)
     obj.add_binary_fraction(0.3)
     obj.add_extinction(0.5)
-    obj.add_field_contamination(contamination_frac)
+    obj.add_field_contamination(contamination_frac, field_data_path=file_path)
 
     # Check if the merging is done correctly
     assert len(obj.abs_mag_incl_plx_binarity_extinction_field) == 340  # 200 (mock) + 200*0.7
@@ -284,7 +287,7 @@ def test_plot_verification_returns_figure_and_axes(initialized_class_object):
     obj.add_parallax_uncertainty(uncertainties[0])
     obj.add_binary_fraction(uncertainties[1])
     obj.add_extinction(uncertainties[2])
-    obj.add_field_contamination(uncertainties[3])
+    obj.add_field_contamination(uncertainties[3], field_data_path=file_path)
     fig, axes = obj.plot_verification(uncertainties)
 
     # Verify the return types
@@ -300,7 +303,7 @@ def test_plot_verification_plots_correct_data(initialized_class_object):
     obj.add_parallax_uncertainty(uncertainties[0])
     obj.add_binary_fraction(uncertainties[1])
     obj.add_extinction(uncertainties[2])
-    obj.add_field_contamination(uncertainties[3])
+    obj.add_field_contamination(uncertainties[3], field_data_path=file_path)
     fig, axes = obj.plot_verification(uncertainties)
 
     # Verify that each subplot contains the expected data
@@ -343,7 +346,21 @@ def test_plot_verification_plots_correct_data(initialized_class_object):
     plt.close(fig)
 
 
+def test_abs_mag_error():
+    # Test with known values
+    w = 10.0
+    delta_w = 0.1
+    delta_m = 0.05
+    expected_result = np.sqrt((5 / (np.log(10) * w) * delta_w) ** 2 + delta_m ** 2)
+    assert np.isclose(abs_mag_error(w, delta_w, delta_m), expected_result)
 
+
+def test_RSS():
+    # Test with known values
+    e1 = 0.1
+    e2 = 0.2
+    expected_result = np.sqrt(e1 ** 2 + e2 ** 2)
+    assert np.isclose(RSS(e1, e2), expected_result)
 
 
 
