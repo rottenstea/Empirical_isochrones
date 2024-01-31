@@ -103,6 +103,8 @@ class simulated_CMD:
         :param delta_plx: Uncertainty fraction of the parallax.
         :return: None
         """
+        if delta_plx < 0:
+            delta_plx = -delta_plx
 
         lower_bound = -delta_plx
         upper_bound = delta_plx
@@ -118,7 +120,12 @@ class simulated_CMD:
         plx = 1000 / self.mean_distance
 
         # add the parallax uncertainties sampled from the normal distribution bounded by delta plx
-        new_dist = 1000 / (plx + plx * normal_distribution)
+        new_plx = plx + plx * normal_distribution
+        new_dist = 1000 / new_plx
+
+        # Check if any value in new_dist is negative
+        if np.any(new_plx < 0):
+            raise ValueError("Negative values in new parallaxes detected")
 
         # print(self.mean_distance, np.mean(new_dist), np.std(new_dist), max(new_dist), min(new_dist))
 
@@ -135,6 +142,8 @@ class simulated_CMD:
         :param binarity_frac: Fraction of unresolved binaries [0,1].
         :return: None
         """
+        if binarity_frac < 0 or binarity_frac > 1:
+            raise ValueError("Fraction needs to be between 0 and 1.")
 
         binary_frame = self.abs_mag_incl_plx.copy()
         # Randomly sample 30% of the elements
@@ -184,6 +193,8 @@ class simulated_CMD:
         :param field_data_path: Path to the field data to sample from (default: 1% of Gaia DR3 sources within 500 pc).
         :return: None
         """
+        if contamination_frac < 0 or contamination_frac > 1:
+            raise ValueError("Fraction needs to be between 0 and 1.")
 
         # load slimmed catalog
         data = pd.read_csv(field_data_path)
