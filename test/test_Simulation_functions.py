@@ -266,7 +266,7 @@ def test_simulate_calls_add_methods_correctly(initialized_class_object):
     obj.set_CMD_type(1)
 
     # Call simulate method
-    result = obj.simulate(uncertainties)
+    result = obj.simulate(uncertainties, field_file=file_path)
 
     # Verify that add_ methods are called with correct uncertainties
     assert obj.abs_mag_incl_plx_binarity_extinction_field is not None

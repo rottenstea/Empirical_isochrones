@@ -225,7 +225,8 @@ class simulated_CMD:
         self.abs_mag_incl_plx_binarity_extinction_field = pd.concat(
             [self.abs_mag_incl_plx_binarity_extinction, field_df[common_columns]], axis=0)
 
-    def simulate(self, uncertainties: list) -> pd.DataFrame:
+    def simulate(self, uncertainties: list, field_file: str =
+                 '/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv') -> pd.DataFrame:
         """
         Method that automatically adds all four implemented uncertainties (parallax, binary fraction, extinction level,
         field contamination) to the simulated CMD data in the recommended order. A column with the cluster name is also
@@ -239,7 +240,7 @@ class simulated_CMD:
         self.add_parallax_uncertainty(delta_plx=u_plx)
         self.add_binary_fraction(binarity_frac=binarity)
         self.add_extinction(extinction_level=extinction)
-        self.add_field_contamination(contamination_frac=field)
+        self.add_field_contamination(contamination_frac=field, field_data_path=field_file)
 
         star_cluster_object = self.abs_mag_incl_plx_binarity_extinction_field
         star_cluster_object["Cluster_id"] = self.name
