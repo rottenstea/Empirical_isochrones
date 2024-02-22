@@ -10,7 +10,7 @@ Just a short script checking the differences between weighted and unweighted SVR
 """
 output_path = my_utility.set_output_path()
 
-HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/Weight_test.csv"
+HP_file = "//data/Hyperparameters/Weight_test.csv"
 my_utility.setup_HP(HP_file)
 
 sns.set_style("darkgrid")

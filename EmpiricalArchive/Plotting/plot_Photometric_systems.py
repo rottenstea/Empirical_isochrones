@@ -12,7 +12,7 @@ from EmpiricalArchive.Extraction.Classfile import *
 output_path = my_utility.set_output_path()
 
 # load hyperparameter file for the different photometric system
-HP_file_cs = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/DANCe_clusters.csv"
+HP_file_cs = "//data/Hyperparameters/DANCe_clusters.csv"
 my_utility.setup_HP(HP_file_cs)
 kwargs = dict(grid=None, HP_file=HP_file_cs, catalog_mode=False)
 

@@ -12,7 +12,7 @@ output_path = my_utility.set_output_path()
 results_path = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Projects/Isochrone_Archive/Coding_logs/"
 
 # 0.2 HP file check
-HP_file = "/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/data/Hyperparameters/Archive_full.csv"
+HP_file = "//EmpiricalArchive/data/Hyperparameters/Archive_full.csv"
 my_utility.setup_HP(HP_file)
 
 # 0.3 Create the archive from all the loaded data files

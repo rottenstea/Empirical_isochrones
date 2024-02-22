@@ -73,11 +73,11 @@ def create_reference_csv(df_list: list, output_path: str, ref_key: str, master_r
 
 # test
 # create_reference_csv(df_list=cluster_df_list,
-# output_path="/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv", ref_key="age")
+# output_path="/Users/alena/PycharmProjects/Empirical_Isochrones/data/Reference_ages_new.csv", ref_key="age")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # set path
-data_path = "/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/"
+data_path = "//EmpiricalArchive/"
 
 # Archive import
 standard_cols = ["Cluster", "Plx", "e_Plx", "Gmag", "e_Gmag", "BPmag", "e_BPmag", "RPmag", "e_RPmag", "BP-RP", "BP-G",

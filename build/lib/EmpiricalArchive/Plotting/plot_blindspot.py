@@ -23,7 +23,7 @@ save_plot = False
 # ----------------------------------------------------------------------------------------------------------------------
 # PARSEC isochrones for illustrating the blindspot
 blindspot_parsec = pd.read_csv(
-    "/Users/alena/PycharmProjects/PaperI/data/Isochrones/PARSEC_isochrones/Bindspot/Blindspot_PARSEC.csv",
+    "//data/Isochrones/PARSEC_isochrones/Bindspot/Blindspot_PARSEC.csv",
     usecols=["logAge", "linAge", "Gmag", "G_BPmag", "G_RPmag"], comment="#")
 blindspot_parsec["BP_RP"] = blindspot_parsec["G_BPmag"] - blindspot_parsec["G_RPmag"]
 blindspot_parsec["BP_G"] = blindspot_parsec["G_BPmag"] - blindspot_parsec["Gmag"]

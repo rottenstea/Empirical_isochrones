@@ -21,8 +21,8 @@ save_plot = False
 # DATA
 # ----------------------------------------------------------------------------------------------------------------------
 # Load the results for Catalog I and II
-empirical_iso_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Empirical/"
-reference_ages = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Reference_ages.csv")
+empirical_iso_path = "//data/Isochrones/Empirical/"
+reference_ages = pd.read_csv("//data/Reference_ages.csv")
 general_kwargs = dict(csv_folder=empirical_iso_path, age_file=reference_ages)
 
 # build two different dataframes with the results

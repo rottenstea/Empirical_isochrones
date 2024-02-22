@@ -14,8 +14,8 @@ output_path = my_utility.set_output_path()
 
 # set other paths
 data_path = "//"
-empirical_iso_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Empirical/"
-reference_ages = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Reference_ages_new.csv")
+empirical_iso_path = "//data/Isochrones/Empirical/"
+reference_ages = pd.read_csv("//data/Reference_ages_new.csv")
 
 sns.set_style("darkgrid")
 plt.rcParams["mathtext.fontset"] = "stix"

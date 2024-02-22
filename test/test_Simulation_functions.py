@@ -40,7 +40,6 @@ def test_neg_dist_apparent_G():
 # ----------------------------------------------------------------------------------------------------------------------
 @pytest.fixture
 def initialized_class_object():
-
     # Generate random data for columns X and Y
     np.random.seed(42)  # Set seed for reproducibility
     isochrone_data = {
@@ -161,7 +160,7 @@ def test_add_binary_fraction(initialized_class_object):
     # Find indices where elements in second_array are different from first_array
     non_matching_indices = np.where(obj.abs_mag_incl_plx_binarity != original_abs_mag_incl_plx)[0]
     # Calculate the difference between corresponding elements in the two arrays
-    differences = obj.abs_mag_incl_plx_binarity  - original_abs_mag_incl_plx
+    differences = obj.abs_mag_incl_plx_binarity - original_abs_mag_incl_plx
     # Filter differences corresponding to the non-matching indices
     non_matching_differences = differences[non_matching_indices]
     # Check if the absolute differences are close to 0.753
@@ -208,20 +207,22 @@ def test_add_field_unallowed_vals(initialized_class_object):
     obj = initialized_class_object
     binarity_frac = -0.1
     with pytest.raises(ValueError, match="Fraction needs to be between 0 and 1."):
+        obj.add_field_contamination(binarity_frac)
         obj.add_field_contamination(binarity_frac, field_data_path=file_path)
     binarity_frac = 1.1
     with pytest.raises(ValueError, match="Fraction needs to be between 0 and 1."):
+        obj.add_field_contamination(binarity_frac)
         obj.add_field_contamination(binarity_frac, field_data_path=file_path)
 
 
 def test_add_field_contamination_sampling(initialized_class_object):
-
     contamination_frac = 0.9
     obj = initialized_class_object
     obj.set_CMD_type(1)
     obj.add_parallax_uncertainty(0.1)
     obj.add_binary_fraction(0.3)
     obj.add_extinction(0.5)
+    obj.add_field_contamination(contamination_frac)
     obj.add_field_contamination(contamination_frac, field_data_path=file_path)
 
     # Check if the correct number of entries is sampled
@@ -230,13 +231,13 @@ def test_add_field_contamination_sampling(initialized_class_object):
 
 
 def test_add_field_contamination_conversion(initialized_class_object):
-
     contamination_frac = 0.7
     obj = initialized_class_object
     obj.set_CMD_type(1)
     obj.add_parallax_uncertainty(0.1)
     obj.add_binary_fraction(0.3)
     obj.add_extinction(0.5)
+    obj.add_field_contamination(contamination_frac)
     obj.add_field_contamination(contamination_frac, field_data_path=file_path)
 
     # Check if the conversion is done correctly for the sampled field data
@@ -245,7 +246,6 @@ def test_add_field_contamination_conversion(initialized_class_object):
 
 
 def test_add_field_contamination_merging(initialized_class_object):
-
     contamination_frac = 0.7
     obj = initialized_class_object
 
@@ -253,6 +253,7 @@ def test_add_field_contamination_merging(initialized_class_object):
     obj.add_parallax_uncertainty(0.1)
     obj.add_binary_fraction(0.3)
     obj.add_extinction(0.5)
+    obj.add_field_contamination(contamination_frac)
     obj.add_field_contamination(contamination_frac, field_data_path=file_path)
 
     # Check if the merging is done correctly
@@ -266,7 +267,7 @@ def test_simulate_calls_add_methods_correctly(initialized_class_object):
     obj.set_CMD_type(1)
 
     # Call simulate method
-    result = obj.simulate(uncertainties, field_file=file_path)
+    result = obj.simulate(uncertainties)
 
     # Verify that add_ methods are called with correct uncertainties
     assert obj.abs_mag_incl_plx_binarity_extinction_field is not None
@@ -287,13 +288,14 @@ def test_plot_verification_returns_figure_and_axes(initialized_class_object):
     obj.add_parallax_uncertainty(uncertainties[0])
     obj.add_binary_fraction(uncertainties[1])
     obj.add_extinction(uncertainties[2])
+    obj.add_field_contamination(uncertainties[3])
     obj.add_field_contamination(uncertainties[3], field_data_path=file_path)
     fig, axes = obj.plot_verification(uncertainties)
 
     # Verify the return types
     assert isinstance(fig, plt.Figure)
     assert isinstance(axes, np.ndarray)
-    assert axes.shape == (6, )  # Assuming 2x3 subplots
+    assert axes.shape == (6,)  # Assuming 2x3 subplots
 
 
 def test_plot_verification_plots_correct_data(initialized_class_object):
@@ -303,6 +305,7 @@ def test_plot_verification_plots_correct_data(initialized_class_object):
     obj.add_parallax_uncertainty(uncertainties[0])
     obj.add_binary_fraction(uncertainties[1])
     obj.add_extinction(uncertainties[2])
+    obj.add_field_contamination(uncertainties[3])
     obj.add_field_contamination(uncertainties[3], field_data_path=file_path)
     fig, axes = obj.plot_verification(uncertainties)
 
@@ -320,14 +323,16 @@ def test_plot_verification_plots_correct_data(initialized_class_object):
     x_plx_uncertainty = obj.cax
     y_plx_uncertainty = obj.abs_mag_incl_plx
     plx_uncertainty_scatter = ax_plx_uncertainty.collections[0]  # Assuming scatter plot is the only collection
-    assert np.array_equal(plx_uncertainty_scatter.get_offsets(), np.column_stack((x_plx_uncertainty, y_plx_uncertainty)))
+    assert np.array_equal(plx_uncertainty_scatter.get_offsets(),
+                          np.column_stack((x_plx_uncertainty, y_plx_uncertainty)))
 
     # Test binary subplot
     ax_bin_uncertainty = axes[2]
     x_bin_uncertainty = obj.cax
     y_bin_uncertainty = obj.abs_mag_incl_plx_binarity
     bin_uncertainty_scatter = ax_bin_uncertainty.collections[0]  # Assuming scatter plot is the only collection
-    assert np.array_equal(bin_uncertainty_scatter.get_offsets(), np.column_stack((x_bin_uncertainty, y_bin_uncertainty)))
+    assert np.array_equal(bin_uncertainty_scatter.get_offsets(),
+                          np.column_stack((x_bin_uncertainty, y_bin_uncertainty)))
 
     # Test Av subplot
     ax_Av_uncertainty = axes[3]
@@ -361,7 +366,3 @@ def test_RSS():
     e2 = 0.2
     expected_result = np.sqrt(e1 ** 2 + e2 ** 2)
     assert np.isclose(RSS(e1, e2), expected_result)
-
-
-
-

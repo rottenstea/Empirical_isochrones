@@ -22,10 +22,10 @@ save_plot = False
 # ----------------------------------------------------------------------------------------------------------------------
 # read in different PARSEC isochrones
 high_Av = pd.read_csv(
-    "/Users/alena/PycharmProjects/PaperI/data/MG1-verification/Pleiades_110Myr_Av018_Z0015_0017.csv")
+    "//data/MG1-verification/Pleiades_110Myr_Av018_Z0015_0017.csv")
 high_Av["BP-RP"] = high_Av["G_BPmag"] - high_Av["G_RPmag"]
 
-no_Av = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/MG1-verification/PARSEC_110Myr_zvar.csv")
+no_Av = pd.read_csv("//data/MG1-verification/PARSEC_110Myr_zvar.csv")
 no_Av["BP-RP"] = no_Av["G_BPmag"] - no_Av["G_RPmag"]
 # ----------------------------------------------------------------------------------------------------------------------
 # PLOTTING

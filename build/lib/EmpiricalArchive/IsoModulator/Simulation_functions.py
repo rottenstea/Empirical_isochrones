@@ -177,7 +177,7 @@ class simulated_CMD:
 
     def add_field_contamination(self, contamination_frac: float,
                                 field_data_path: str =
-                                '/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv'):
+                                '/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv'):
         """
         Method for adding a specified fraction of field contamination to the cluster CMD from a field data catalog. The
         data are randomly sampled and converted to the CMD format (color index and absolute magnitude). The field data

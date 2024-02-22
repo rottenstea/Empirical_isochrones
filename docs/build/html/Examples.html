@@ -116,6 +116,20 @@
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">folders</span><span class="o">/</span><span class="n">z6</span><span class="o">/</span><span class="n">y4rdkpdx3vlbwtmngx04x_1w0000gp</span><span class="o">/</span><span class="n">T</span><span class="o">/</span><span class="n">ipykernel_6182</span><span class="o">/</span><span class="mf">1652750867.</span><span class="n">py</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;../../../PaperI/&#39;</span><span class="p">))</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> 
+<span class="ne">----&gt; </span><span class="mi">5</span> <span class="kn">from</span> <span class="nn">EmpiricalArchive.IsoModulator.Simulation_functions</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;EmpiricalArchive&#39;
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 </section>
@@ -190,25 +204,6 @@
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/Users/alena/PycharmProjects/PaperI/EmpiricalArchive/IsoModulator/Simulation_functions.py:212: SettingWithCopyWarning:
-
-
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-
-No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/var/folders/z6/y4rdkpdx3vlbwtmngx04x_1w0000gp/T/ipykernel_5355/3922852537.py:3: UserWarning:
-
-Matplotlib is currently using module://matplotlib_inline.backend_inline, which is a non-GUI backend, so cannot show the figure.
-</pre></div>
-</div>
-<img alt="_images/933edbcf2ce7a164bb0cd1e9ea3a380250987b60ec8b591c35fa067805db59de.png" src="_images/933edbcf2ce7a164bb0cd1e9ea3a380250987b60ec8b591c35fa067805db59de.png" />
-</div>
 </div>
 </section>
 <section id="calculate-the-new-isochrone">
@@ -232,14 +227,6 @@ Matplotlib is currently using module://matplotlib_inline.backend_inline, which i
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The &#39;no_errors&#39; flag is activated. All weights for the SVR will be set to one.
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>The resampling of 100 curves took 16.423109769821167 s (6 parallel jobs).
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="plot-the-result">
@@ -256,9 +243,6 @@ Matplotlib is currently using module://matplotlib_inline.backend_inline, which i
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="_images/7f798efbb06b9649d12cd64822812a37fb93980124ec606da515958501177be0.png" src="_images/7f798efbb06b9649d12cd64822812a37fb93980124ec606da515958501177be0.png" />
 </div>
 </div>
 </section>
@@ -277,11 +261,6 @@ Matplotlib is currently using module://matplotlib_inline.backend_inline, which i
 <span class="n">area_between_curves</span> <span class="o">=</span> <span class="n">simps</span><span class="p">(</span><span class="n">euclidean_distances</span><span class="p">,</span> <span class="n">result_df</span><span class="p">[</span><span class="s2">&quot;m_x&quot;</span><span class="p">])</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Area between curves:&quot;</span><span class="p">,</span> <span class="n">area_between_curves</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Area between curves: -71.73236022103083
 </pre></div>
 </div>
 </div>

@@ -22,20 +22,20 @@ interactive = True
 # ----------------------------------------------------------------------------------------------------------------------
 # Load theoretical isochrones
 Bossini = pd.read_csv(
-    "/Users/alena/PycharmProjects/PaperI/data/Isochrones/PARSEC_isochrones/Pleiades_plot_Dr2/Bossini.csv")
+    "//data/Isochrones/PARSEC_isochrones/Pleiades_plot_Dr2/Bossini.csv")
 Bossini["BP-RP"] = Bossini["G_BPmag"] - Bossini["G_RPmag"]
 
-Dias = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Isochrones/PARSEC_isochrones/Pleiades_plot_Dr2/Dias.csv")
+Dias = pd.read_csv("//data/Isochrones/PARSEC_isochrones/Pleiades_plot_Dr2/Dias.csv")
 Dias["BP-RP"] = Dias["G_BPftmag"] - Dias["G_RPmag"]
 Dias["BP-RP2"] = Dias["G_BPbrmag"] - Dias["G_RPmag"]
 
 CG = pd.read_csv(
-    "/Users/alena/PycharmProjects/PaperI/data/Isochrones/PARSEC_isochrones/Pleiades_plot_Dr2"
+    "//data/Isochrones/PARSEC_isochrones/Pleiades_plot_Dr2"
     "/CG_Evans_Av_0p18_age_7p87_Z_0p0152.csv")
 CG["BP-RP"] = CG["G_BPmag"] - CG["G_RPmag"]
 
 # Define Pleiades cluster object + CMD
-Pleiades_df = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Cluster_data/Melotte_22_CG_DR2.csv")
+Pleiades_df = pd.read_csv("//data/Cluster_data/Melotte_22_CG_DR2.csv")
 Pleiades_df["Cluster_id"] = "Melotte_22"
 OC = star_cluster("Melotte_22", Pleiades_df, catalog_mode=False)
 OC.create_CMD(CMD_params=["Gmag", "BP-RP"], no_errors=True)

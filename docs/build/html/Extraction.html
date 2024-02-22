@@ -386,46 +386,6 @@ updated list.</p></li>
 <p>Function that converts the raw .csv input files into pd.DataFrames and only retains the necessary
 columns. It is automatically called to do this transformation for 8 different catalogs in the main script, so
 that they may just be imported into the various python scripts by their variable name or the variable name of the list.</p>
-<span class="target" id="module-EmpiricalArchive.Extraction.pre_processing"></span><dl class="py function">
-<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.pre_processing.create_df">
-<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.pre_processing.</span></span><span class="sig-name descname"><span class="pre">create_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.pre_processing.create_df" title="Permalink to this definition"></a></dt>
-<dd><p>Read in and reformat the input data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filepath</strong> – Path to csv-file</p></li>
-<li><p><strong>columns</strong> – columns to include in the import</p></li>
-<li><p><strong>names</strong> – uniform names for the columns on which the code works</p></li>
-<li><p><strong>quality_filter</strong> – dictionary of additional quality filters. Requires the parameter name (= column name), limit type (upper/lower) and the numerical filter value</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>namelist of all clusters in the dataframe and the formatted dataframe</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="EmpiricalArchive.Extraction.pre_processing.create_reference_csv">
-<span class="sig-prename descclassname"><span class="pre">EmpiricalArchive.Extraction.pre_processing.</span></span><span class="sig-name descname"><span class="pre">create_reference_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">master_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Cluster_id'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#EmpiricalArchive.Extraction.pre_processing.create_reference_csv" title="Permalink to this definition"></a></dt>
-<dd><p>As often different literature ages are available for the clusters, this function is designed to convert these
-into a csv-file and (optionally) choose a reference age based on the user input.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df_list</strong> – List of input dataframes (usually corresponding to the different catalogs</p></li>
-<li><p><strong>output_path</strong> – Location where the new csv-file should be saved</p></li>
-<li><p><strong>ref_key</strong> – age / av</p></li>
-<li><p><strong>master_ref</strong> – List of references ordered by their importance. The first will be preferred when chosing the ref age, then the second if the first is a NaN and so on, maximum = 3</p></li>
-<li><p><strong>id_col</strong> – column containting cluster names or other identifiers</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 </section>
 

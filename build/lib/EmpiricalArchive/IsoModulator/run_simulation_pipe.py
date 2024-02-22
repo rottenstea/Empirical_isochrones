@@ -13,11 +13,11 @@ from scipy.integrate import simps
 # set paths
 output_path = my_utility.set_output_path(
     main_path="/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Projects/Isochrone_Archive/Coding_logs/")
-mastertable_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Mastertable_Archive.csv"
-results_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/Simulations/"
+mastertable_path = "//data/Isochrones/Mastertable_Archive.csv"
+results_path = "//data/Isochrones/Simulations/"
 
 # 0.2 HP file check
-HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/Simulations_1.csv"
+HP_file = "//data/Hyperparameters/Simulations_1.csv"
 my_utility.setup_HP(HP_file)
 
 # 0.4 Set the kwargs for the parameter grid and HP file and plot specs

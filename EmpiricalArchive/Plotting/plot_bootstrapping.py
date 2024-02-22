@@ -11,7 +11,7 @@ from EmpiricalArchive.Extraction.pre_processing import cluster_df_list, cluster_
 # ----------------------------------------------------------------------------------------------------------------------
 # Set output path to the Coding-logfile
 output_path = my_utility.set_output_path()
-HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/Archive_full.csv"
+HP_file = "//data/Hyperparameters/Archive_full.csv"
 my_utility.setup_HP(HP_file)
 kwargs = dict(grid=None, HP_file=HP_file, catalog_mode=True)
 

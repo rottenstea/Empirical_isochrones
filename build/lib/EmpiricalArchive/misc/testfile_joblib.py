@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # load pre-processing function for my different catalogs
     from EmpiricalArchive.Extraction.pre_processing import cluster_df_list, cluster_name_list
 
-    HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/Archive_full.csv"
+    HP_file = "//data/Hyperparameters/Archive_full.csv"
     my_utility.setup_HP(HP_file)
 
     # if using load and dump it is best to have this folder for the memmaps

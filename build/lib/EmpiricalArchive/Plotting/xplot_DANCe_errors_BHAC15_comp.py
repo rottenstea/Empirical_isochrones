@@ -12,7 +12,7 @@ from EmpiricalArchive.Extraction.pre_processing import case_study_names, cluster
 output_path = my_utility.set_output_path()
 
 # Set HP file for the Case studies
-HP_file_cs = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/DANCe_clusters.csv"
+HP_file_cs = "//data/Hyperparameters/DANCe_clusters.csv"
 my_utility.setup_HP(HP_file_cs)
 kwargs = dict(grid=None, HP_file=HP_file_cs, catalog_mode=False)
 
@@ -143,11 +143,11 @@ for OC in OCs:
 # DATA + EXTRACTION
 # ----------------------------------------------------------------------------------------------------------------------
 # Set new HP file
-HP_CII = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/CatalogII.csv"
+HP_CII = "/Users/alena/PycharmProjects/Empirical_Isochrones/data/Hyperparameters/CatalogII.csv"
 my_utility.setup_HP(HP_CII)
 
 # Load theoretical isochrones for the Pleiades
-bhac15_df = pd.read_csv("/Users/alena/PycharmProjects/PaperI/data/Isochrones/BHAC15/baraffe15.csv")
+bhac15_df = pd.read_csv("//data/Isochrones/BHAC15/baraffe15.csv")
 Pleiades_age = [0.08, 0.1, 0.12]  # in Gyr
 isos_Pleiades = [bhac15_df[bhac15_df["Age_GAIA"] == i] for i in Pleiades_age]
 

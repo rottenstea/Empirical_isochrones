@@ -9,10 +9,10 @@ from EmpiricalArchive.Extraction.pre_processing import cluster_df_list, cluster_
 
 # 0.1 Set the correct output paths
 output_path = my_utility.set_output_path()
-results_path = "/Users/alena/PycharmProjects/PaperI/data/Isochrones/temp/"  # set to a temp directory for testing now
+results_path = "//data/Isochrones/temp/"  # set to a temp directory for testing now
 
 # 0.2 HP file check
-HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/scratch.csv"
+HP_file = "//data/Hyperparameters/scratch.csv"
 my_utility.setup_HP(HP_file)
 
 # 0.3 Create the archive from all the loaded data files

@@ -80,7 +80,7 @@ def WD_filter(df_input, cols):
 # ----------------------------------------------------------------------------------------------------------------------
 # Set output path to the Coding-logfile
 output_path = my_utility.set_output_path()
-HP_file = "/Users/alena/PycharmProjects/PaperI/data/Hyperparameters/White_dwarf_test.csv"
+HP_file = "//data/Hyperparameters/White_dwarf_test.csv"
 my_utility.setup_HP(HP_file)
 kwargs = dict(grid=None, HP_file=HP_file, catalog_mode=True)
 
@@ -112,7 +112,7 @@ for cluster in CIII_clusters_new:
     # Create the robust isochrone and uncertainty border from bootstrapped curves
     n_boot = 1000
     result_df = OC.isochrone_and_intervals(n_boot=n_boot, kwargs=kwargs,
-                                           output_loc="/Users/alena/PycharmProjects/PaperI/"
+                                           output_loc="/Users/alena/PycharmProjects/Empirical_Isochrones/"
                                                       "data/Isochrones/White_dwarf_filter_test/")
 
     # Plot the result
