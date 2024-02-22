@@ -14,7 +14,7 @@ release = '1.0.0'
 # -- Path to code ---------------------------------------------------
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../../Empirical_Isochrones/'))
+sys.path.insert(0, os.path.abspath('../../../Empirical_isochrones/'))
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
