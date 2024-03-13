@@ -91,6 +91,10 @@ class star_cluster(object):
         av_cols = [col for col in self.data.columns if 'av' in col]
         self.avs = self.data[av_cols].drop_duplicates()
 
+        # Gaia DR3 AG
+        if 'AG' in self.data.columns:
+            self.A_G = self.data["AG"]
+
         error_cols = [col for col in self.data.columns if str(col).startswith("e_")]
         self.errors = self.data[error_cols]
 

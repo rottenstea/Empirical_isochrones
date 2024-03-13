@@ -55,8 +55,8 @@ def build_empirical_df(csv_folder: str, age_file: pd.DataFrame, col_names: list,
 if __name__ == "__main__":
     # ----------------------------------------------------------------------------------------------------------------------
     # set paths
-    empirical_iso_path = "//data/Isochrones/Empirical/"
-    reference_ages = pd.read_csv("//data/Isochrones/Empirical/")
+    empirical_iso_path = "../data/Isochrones/Empirical/"
+    reference_ages = pd.read_csv("../data/Reference_ages_new.csv")
     output_path = my_utility.set_output_path()
 
     save_table = True
@@ -128,6 +128,6 @@ if __name__ == "__main__":
 
     # save the table
     if save_table:
-        mastertable.to_csv("/Users/alena/PycharmProjects/Empirical_Isochrones/data/Isochrones/Mastertable_Archive.csv",
+        mastertable.to_csv("../data/Isochrones/Mastertable_Archive_TW-Hydrae.csv",
                            mode="w", header=True)
     # ----------------------------------------------------------------------------------------------------------------------
