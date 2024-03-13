@@ -34,6 +34,7 @@ class simulated_CMD:
         """
 
         # initialize other stuff
+        self.CMD_type = None
         self.green = None
         self.cax = None
         self.abs_G = None
@@ -62,6 +63,25 @@ class simulated_CMD:
         OC = star_cluster(cluster_name, cluster_data_df, dataset_id="1")
         self.mean_distance = float(np.mean(OC.distance))
 
+    def nan_handling(self):
+        """
+        Small subroutine that deals with possible NaN values in the CMD data.
+        :return: None
+        """
+        mag_dict = {"BP-RP": ["bp_rp", "abs_G_bprp"], "BP-G": ["bp_g", "abs_G_bpg"], "G-RP": ["g_rp", "abs_G_grp"]}
+
+        cluster_df_nona = self.cluster_data.dropna(subset=[f'{self.cols[0].replace("-", "")}_isochrone_x',
+                                                           f'{self.cols[0].replace("-", "")}_isochrone_y'])
+
+        if self.cluster_data.shape != cluster_df_nona.shape:
+            print("Warning: NaN values encountered in the cluster dataframe.")
+            self.abs_G = cluster_df_nona[f'{self.cols[0].replace("-", "")}_isochrone_y']
+            self.cax = cluster_df_nona[f'{self.cols[0].replace("-", "")}_isochrone_x']
+
+        else:
+            self.abs_G = getattr(self, mag_dict[self.cols[0]][1])
+            self.cax = getattr(self, mag_dict[self.cols[0]][0])
+
     def set_CMD_type(self, CMD_type: int):
         """
         Class method for determining the type of CMD that will be created. Currently set to the Gaia CMD options.
@@ -75,24 +95,24 @@ class simulated_CMD:
         if (CMD_type < 1) or (CMD_type > 3):
             raise ValueError("CMD-type can only be 1, 2, or 3.")
 
+        self.CMD_type = CMD_type
+
         # calculate apparent G mag
         if CMD_type == 1:
-            self.green = apparent_G(self.abs_G_bprp, self.mean_distance)
-            self.cax = self.bp_rp
-            self.abs_G = self.abs_G_bprp
             self.cols = ["BP-RP", "Gmag"]
-        elif CMD_type == 2:
-            self.green = apparent_G(self.abs_G_bpg, self.mean_distance)
-            self.cax = self.bp_g
-            self.abs_G = self.abs_G_bpg
-            self.cols = ["BP-G", "Gmag"]
-        elif CMD_type == 3:
-            self.green = apparent_G(self.abs_G_grp, self.mean_distance)
-            self.cax = self.g_rp
-            self.abs_G = self.abs_G_grp
-            self.cols = ["G-RP", "Gmag"]
+            self.nan_handling()
 
+        elif CMD_type == 2:
+            self.cols = ["BP-G", "Gmag"]
+            self.nan_handling()
+
+        elif CMD_type == 3:
+            self.cols = ["G-RP", "Gmag"]
+            self.nan_handling()
+
+        self.green = apparent_G(self.abs_G, self.mean_distance)
         self.num_simulated_stars = len(self.green)
+        print(self.num_simulated_stars)
 
     def add_parallax_uncertainty(self, delta_plx: float):
         """
@@ -156,10 +176,14 @@ class simulated_CMD:
 
     def add_extinction(self, extinction_level: float):
         """
-        Method for adding a constant extinction level to the CMD data in both absolute magnitude and color index. In
-        case of the absolute magnitudes, the extinction level is directly added. In case of the color index, the color
-        excess is calculated by first multiplying the Gaia DR3 extinction coefficients (approximated with Draine+2003,
-        R_V = 3.1 and the assumption of a flat SED) with the extinction level, and then subtracting them.
+        Method for adding a constant extinction level to the CMD data in both absolute magnitude and color index. For
+         the absolute magnitudes, the extinction level can be directly added.
+         In the case of the color index, first the color excess in the respective color axis of the CMD
+         $E(Band1 - Band2) = A_Band1 - A_Band2
+         needs to be calculated. To get the extinction values A_BP and A_RP, we calculated the Gaia DR3 extinction
+         coefficients (approximated with Draine+2003, R_V = 3.1 and the assumption of a flat SED), which are
+         k_BP = 1.212 and k_RP = 0.76. They are multiplied with the A_G value, which is the extinction level passed to
+         the function as input. In case of BP-G and G-RP CMDs, the A_G value can be used directly.
         Recommended use: After adding parallax uncertainty and binary fraction.
 
         :param extinction_level: in Gaia G-band magnitudes (1 AV = 0.789 AG)
@@ -167,14 +191,24 @@ class simulated_CMD:
         """
 
         # make into dataframe
-        cluster_df = pd.DataFrame(data=np.stack([self.bp_rp, self.abs_mag_incl_plx_binarity], axis=1),
+        cluster_df = pd.DataFrame(data=np.stack([self.cax, self.abs_mag_incl_plx_binarity], axis=1),
                                   columns=self.cols)
 
         # calculate extinction in the various passbands and excess factor E
         A_BP = 1.212 * extinction_level
         A_RP = 0.76 * extinction_level
-        E = A_BP - A_RP
+        A_G = extinction_level
 
+        if self.CMD_type == 1:
+            E = A_BP - A_RP
+        elif self.CMD_type == 2:
+            E = A_BP - A_G
+        elif self.CMD_type == 3:
+            E = A_G - A_RP
+        else:
+            raise ValueError("Incorrect CMD type encountered when adding extinction level.")
+
+        print(f"Sanity check E value: {E}")
         cluster_df[self.cols[1]] += extinction_level
         cluster_df[self.cols[0]] += E
 
@@ -205,7 +239,7 @@ class simulated_CMD:
 
         # use only the relevant columns
         field_df = sampled_data[
-            ["parallax", "parallax_error", "ruwe", "phot_g_mean_mag", "phot_bp_mean_mag", "phot_rp_mean_mag"]]
+            ["parallax", "parallax_error", "ruwe", "phot_g_mean_mag", "phot_bp_mean_mag", "phot_rp_mean_mag"]].copy()
 
         # generate CMD columns
         if self.cols[0] == "BP-RP":
@@ -225,8 +259,7 @@ class simulated_CMD:
         self.abs_mag_incl_plx_binarity_extinction_field = pd.concat(
             [self.abs_mag_incl_plx_binarity_extinction, field_df[common_columns]], axis=0)
 
-    def simulate(self, uncertainties: list, field_file: str =
-                 '/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv') -> pd.DataFrame:
+    def simulate(self, uncertainties: list, field_file: str = '/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Gaia_DR3/Gaia_DR3_500pc_1percent.csv') -> pd.DataFrame:
         """
         Method that automatically adds all four implemented uncertainties (parallax, binary fraction, extinction level,
         field contamination) to the simulated CMD data in the recommended order. A column with the cluster name is also
@@ -261,24 +294,27 @@ class simulated_CMD:
 
         # Plot original
         if self.cols[0] == "BP-RP":
-            axes[0].scatter(self.cax, self.abs_G_bprp, s=5, color="blue")
+            axes[0].scatter(self.bp_rp, self.abs_G_bprp, s=5, color="blue")
         elif self.cols[0] == "BP-G":
-            axes[0].scatter(self.cax, self.abs_G_bpg, s=5, color="blue")
+            axes[0].scatter(self.bp_g, self.abs_G_bpg, s=5, color="blue")
         elif self.cols[0] == "G-RP":
-            axes[0].scatter(self.cax, self.abs_G_grp, s=5, color="blue")
+            axes[0].scatter(self.g_rp, self.abs_G_grp, s=5, color="blue")
         axes[0].set_ylim(15, -4)
+        axes[0].set_xlim(-1, 4)
         axes[0].legend(loc="best")
         axes[0].set_title("original")
 
         # plx uncertainty
         axes[1].scatter(self.cax, self.abs_mag_incl_plx, s=5, color="orange", label=uncertainties[0])
         axes[1].set_ylim(15, -4)
+        axes[1].set_xlim(-1, 4)
         axes[1].legend(loc="best")
         axes[1].set_title("u_plx")
 
         # binarity
         axes[2].scatter(self.cax, self.abs_mag_incl_plx_binarity, s=5, color="red", label=uncertainties[1])
         axes[2].set_ylim(15, -4)
+        axes[2].set_xlim(-1, 4)
         axes[2].legend(loc="best")
         axes[2].set_title("binarity")
 
@@ -287,6 +323,7 @@ class simulated_CMD:
                         self.abs_mag_incl_plx_binarity_extinction[self.cols[1]], s=5, color="green",
                         label=uncertainties[2])
         axes[3].set_ylim(15, -4)
+        axes[3].set_xlim(-1, 4)
         axes[3].legend(loc="best")
         axes[3].set_title("extinction")
 
@@ -295,6 +332,7 @@ class simulated_CMD:
                         self.abs_mag_incl_plx_binarity_extinction_field[self.cols[1]], s=5, color="violet",
                         label=uncertainties[3])
         axes[4].set_ylim(15, -4)
+        axes[4].set_xlim(-1, 4)
         axes[4].legend(loc="best")
         axes[4].set_title("field")
 
