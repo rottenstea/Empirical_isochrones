@@ -346,7 +346,7 @@ class star_cluster(object):
         return params
 
     def SVR_Hyperparameter_tuning(self, input_array: np.ndarray, weight_data: np.ndarray, output_file: str = None,
-                                  grid: dict = None):
+                                  grid: dict = None, rkf_func = None):
         """
         Tuning of the SVR hyperparameter. Takes the 2D input data along with an 1D weight array, stacks them and calls
         the gridsearch_and_ranking function. After the tuning is finished, the results are written into the global
@@ -386,7 +386,7 @@ class star_cluster(object):
             grid = dict(kernel=["rbf"], gamma=["scale"], C=Cvals, epsilon=evals)
 
         # Call the gridsearch function
-        ranking = self.gridsearch_and_ranking(X_train=X_train_scaled, Y_train=Y_flat, grid=grid, weight_train=Y_weights)
+        ranking = self.gridsearch_and_ranking(X_train=X_train_scaled, Y_train=Y_flat, grid=grid, weight_train=Y_weights, rkf_function=rkf_func)
         print("...finished tuning")
 
         # Cluster name and CMD specs MUST be included for unique identification of the correct hyperparameters
@@ -409,7 +409,7 @@ class star_cluster(object):
         return ranking.params[0]
 
     def curve_extraction(self, svr_data: np.ndarray, HP_file: str, svr_predict: np.ndarray,
-                         svr_weights: np.ndarray, grid: dict = None, always_tune: bool = False):
+                         svr_weights: np.ndarray, grid: dict = None, rkf_func = None, always_tune: bool = False):
         """
         Read in hyperparameters if possible, else call the SVR_hyperparameter_tuning function. Then calculate the
         regression curve using the hyperparameters for the svr_data (original or bootstrapped array) and transform
@@ -437,11 +437,11 @@ class star_cluster(object):
             except IndexError:
                 print("Index error: Running HP tuning for {}...".format(self.name))
                 params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights,
-                                                        output_file=HP_file, grid=grid)
+                                                        output_file=HP_file, grid=grid, rkf_func=rkf_func)
         else:
             print(f"The always_tune flag is set. Starting tuning for {self.name} ...")
             params = self.SVR_Hyperparameter_tuning(input_array=svr_data, weight_data=svr_weights, output_file=None,
-                                                    grid=grid)
+                                                    grid=grid, rkf_func=rkf_func)
 
         # Define the two coordinates for SVR and fit-predict the tuned model to them
         X = svr_data[:, 0].reshape(len(svr_data[:, 0]), 1)

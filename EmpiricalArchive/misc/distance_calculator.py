@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 from EmpiricalArchive.My_tools import my_utility
 from EmpiricalArchive.Extraction.Classfile import *
 
@@ -11,14 +11,36 @@ output_path = my_utility.set_output_path()
 results_path = "/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Projects/Isochrone_Archive/Coding_logs/"
 isochrone_path = "data/Isochrones/Empirical/"
 
+sns.set_style("darkgrid")
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["font.family"] = "STIXGeneral"
+plt.rcParams["font.size"] = 12
+
 mastertable_path = "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Isochrones/"
 mastertable = pd.read_csv(
-    mastertable_path + "Mastertable_Archive.csv")  # table of all empirical isochrones in the archive
+    mastertable_path + "Mastertable_Archive_TWA_Carina.csv")  # extended mastertable incl Carina and TWA
 
-# extended mastertable incl Carina and TWA
-extended_mastertable = pd.read_csv(mastertable_path + "Mastertable_Archive_TWA_Carina.csv")
-cluster = "TW_Hydrae"
-cluster_df = extended_mastertable[extended_mastertable["Cluster"] == cluster]  # filter for the example clusters
+######################
+cluster = "Carina"
+######################
+
+# data points
+if cluster == "TW_Hydrae":
+    datapoints = pd.read_csv("../data/Cluster_data/TW_Hydrae/TWA_single_p68_w_errors_DR32016.csv")
+elif cluster == "Carina":
+    Carina_all_df = pd.read_csv("../data/Cluster_data/Carina/Carina_sources.csv")
+    Carina_all_df.rename(columns={"parallax": "Plx", "parallax_error": "e_Plx"}, inplace=True)
+    datapoints = Carina_all_df[Carina_all_df["bonafide_UVES"] == True]
+else:
+    raise ValueError("Name issue")
+
+datapoints["BPRP"] = datapoints["BPmag"] - datapoints["RPmag"]
+datapoints["BPG"] = datapoints["BPmag"] - datapoints["Gmag"]
+datapoints["GRP"] = datapoints["Gmag"] - datapoints["RPmag"]
+datapoints["distance"] = 1000 / datapoints["Plx"]
+datapoints["abs_G"] = datapoints["Gmag"] - 5 * np.log10(datapoints["distance"]) + 5
+
+cluster_df = mastertable[mastertable["Cluster"] == cluster]  # filter for the example clusters
 cluster_names = np.unique(mastertable["Cluster"])
 
 distance_df = pd.DataFrame(
@@ -47,14 +69,6 @@ for n, name in enumerate(cluster_names[:]):
                                                          100_000)
         interp_points_original = interpolate_single_isochrone(cluster_df[bands[0]],
                                                               cluster_df[bands[1]], 100)
-        '''
-        fig_test, ax = plt.subplots(1, 1, figsize=(4, 6))
-        ax.scatter(interp_points_new[:, 0], interp_points_new[:, 1], label="new")
-        ax.scatter(interp_points_original[:, 0], interp_points_original[:, 1], label="original")
-        ax.legend(loc="best")
-        ax.set_ylim(ax.get_ylim()[1], ax.get_ylim()[0])
-        fig_test.show()
-        '''
 
         # Number of neighbors to consider
         k_neighbors = 100
@@ -79,7 +93,7 @@ for band_id in ["BPRP", "BPG", "GRP"]:
         lambda x: (x - distance_df[f"distance_{band_id}"].min()) / (distance_df[f"distance_{band}"].max() -
                                                                     distance_df[f"distance_{band}"].min()))
 
-min_indices = distance_df.filter(like='scaled_distance').idxmin()
+min_indices = distance_df[distance_df["Cluster"] != cluster].filter(like='scaled_distance').idxmin()
 
 # Get corresponding rows
 min_rows = distance_df.loc[min_indices]
@@ -87,20 +101,41 @@ min_rows = distance_df.loc[min_indices]
 print(min_rows)
 
 bands = ["BPRP", "BPG", "GRP"]
+colors = ["#e7298a", "#e7298a", "#e6ab02"]
 
 fig, ax = plt.subplots(1, 3, figsize=(8, 4))
 
 for i in range(3):
     band = bands[i]
-    ax[i].plot(cluster_df[f"{band}_isochrone_x"], cluster_df[f"{band}_isochrone_y"])
+
+    ax[i].scatter(datapoints[band], datapoints["abs_G"], color="black", s=30, marker=".", label=f"stars")
+    ax[i].plot(cluster_df[f"{band}_isochrone_x"], cluster_df[f"{band}_isochrone_y"], label=cluster)
     ax[i].plot(mastertable[mastertable["Cluster"] == min_rows.iloc[i].Cluster][f"{band}_isochrone_x"],
                mastertable[mastertable["Cluster"] == min_rows.iloc[i].Cluster][f"{band}_isochrone_y"], label=
-               f'{min_rows.iloc[i].Cluster} ({round(min_rows.iloc[i].ref_age_Myr, 2)} Myr)')
+               f'{min_rows.iloc[i].Cluster}\n{round(min_rows.iloc[i].ref_age_Myr, 1)} Myr', color=colors[i])
     ax[i].set_xlabel(band)
-    ax[i].set_ylabel("abs G")
+
     ax[i].set_ylim(ax[i].get_ylim()[1], ax[i].get_ylim()[0])
-    ax[i].legend(loc="upper right")
-    ax[i].set_title(round(min_rows.iloc[i][f'scaled_distance_{band}'], 2))
+    ax[i].set_title(f"Deviation: {round(min_rows.iloc[i][f'scaled_distance_{band}'], 2)}")
 
 plt.suptitle(cluster)
+ax[0].set_ylabel("abs G")
+
+# Initialize empty dictionaries to store unique handles and labels
+unique_handles = {}
+unique_labels = {}
+
+# Grab handles and labels from subplots and store unique ones
+for ax in ax.flat:
+    for handle, label in zip(*ax.get_legend_handles_labels()):
+        if label not in unique_labels:
+            unique_handles[label] = handle
+            unique_labels[label] = label
+
+# Create a single legend
+plt.legend(unique_handles.values(), unique_labels.values(), bbox_to_anchor=(1,1,-0.2,0))
+
+plt.subplots_adjust(left=0.07, bottom=0.12, right=0.79, top=0.88)
 fig.show()
+
+fig.savefig(output_path+f"{cluster}_empirical_isochrone_distance.png", dpi = 300)

@@ -5,112 +5,191 @@ from EmpiricalArchive.Extraction.pre_processing import cluster_df_list
 from EmpiricalArchive.Extraction.Classfile import star_cluster
 from EmpiricalArchive.My_tools import my_utility
 
-from comparison_function import compute_NN_distance
+from comparison_function import compute_NN_distance, anova_analysis
+
+import seaborn as sns
 
 # set paths
 output_path = my_utility.set_output_path(
     main_path="/Users/alena/Library/CloudStorage/OneDrive-Personal/Work/PhD/Projects/Isochrone_Archive/Coding_logs/")
-mastertable_path = "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Isochrones/Mastertable_Archive.csv"
-results_path = "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Isochrones/Simulations"
+mastertable_path = \
+    "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Isochrones/Mastertable_Archive.csv"
+results_path = "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Isochrones/Simulations/Fixed_Extinction/"
 
-# 0.2 HP file check
-HP_file = "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Hyperparameters/Simulations_1.csv"
+# HP file check
+HP_file = "/Users/alena/PycharmProjects/Empirical_Isochrones/EmpiricalArchive/data/Hyperparameters/Simulations_test_Extinctionfix.csv"
 my_utility.setup_HP(HP_file)
 
-# 0.4 Set the kwargs for the parameter grid and HP file and plot specs
-kwargs = dict(grid=None, HP_file=HP_file)
-
-# 0.5 Standard plot settings
-# sns.set_style("darkgrid")
+# Set the kwargs for the parameter grid and HP file and plot specs
+sns.set_style("darkgrid")
 plt.rcParams["mathtext.fontset"] = "stix"
 plt.rcParams["font.family"] = "STIXGeneral"
-plt.rcParams["font.size"] = 18
-
+plt.rcParams["font.size"] = 12
+kwargs = dict(grid=None, HP_file=HP_file)
 save_plot = True
 
+##########
+## GRID ##
+##########
+
 # define uncertainty intervals
-f_plx = [0.01, 0.1]
-f_bin = [0.2, 0.3, 0.5]
-f_cont = [0.05, 0.5, 0.9]
-extinct = [0.1, 0.4, 0.789]
+f_plx = [0.0, 0.05, 0.1, 0.3]
+f_bin = [0.1, 0.3, 0.5, 0.8]
+extinct = [0.0, 0.2, 0.5, 1]
+f_cont = [0.01, 0.25, 0.5, 1]
 
-# make the grid
-combinations = np.array(list(product(f_plx, f_bin, extinct, f_cont)))
-# print(combinations.shape)
+combinations = np.array(list(product(f_plx, f_bin, extinct, f_cont)))  # make the grid
+combinations = np.insert(combinations, 0, [0, 0, 0, 0],
+                         axis=0)  # insert 0 values for min calibration of the distance metric
 
-# define clusters
-clusters = ["delta Sco", "Melotte_22", "NGC_2632"]
 
-# load and filter isochrone table and cluster_data_table
-mastertable = pd.read_csv(mastertable_path)
-filtered_df = mastertable[mastertable["Cluster"].isin(clusters)]
-Archive_df = pd.concat(cluster_df_list, axis=0)
+clusters = ["delta Sco", "Blanco_1", "NGC_752"]  # define clusters
+# color_palettes = ["Blues"]#, "Oranges"]
+palette_3 = ["#e7298a", "#7fc97f", "#e6ab02"]
+#################
+# SIMULATE CMDS #
+#################
 
-CMD1 = simulated_CMD(cluster_name=clusters[1], isochrone_df=filtered_df, cluster_data_df=Archive_df)
+mastertable = pd.read_csv(mastertable_path)  # table of all empirical isochrones in the archive
+filtered_df = mastertable[mastertable["Cluster"].isin(clusters)]  # filter for the example clusters
+Archive_df = pd.concat(cluster_df_list, axis=0)  # cluster data table (for distance approximation)
 
-# set CMD type
-CMD1.set_CMD_type(1)
+all_dfs = []
+# Loop over clusters
+for c_id,c in enumerate(clusters[:]):
+    print("-" * 60, f"\n RUN FOR {c} \n", 60 * "-")
 
-combination_dfs = []
-overall_distances = []
+    combination_df = pd.DataFrame(data=combinations,
+                                  columns=["u_plx", "f_binaries", "extinction", "f_field"])  # define grid
+    sim_CMD = simulated_CMD(cluster_name=c, isochrone_df=filtered_df,
+                            cluster_data_df=Archive_df)  # simulate CMD from empirical isochrone
 
-for i, row in enumerate(combinations[:]):
-    print(row)
-    cmd_data = CMD1.simulate(row)
+    CMD_type_combos = []
+    # Loop over CMD types
+    for typ in [1, 2, 3]:
+        print(f'\n :: Run for CMD type {typ} :: \n')
 
-    OC = star_cluster(name=clusters[1], catalog=cmd_data, dataset_id=i)
-    OC.create_CMD_quick_n_dirty(CMD_params=["Gmag", "BP-RP"], no_errors=True)
+        sim_CMD.set_CMD_type(typ)  # set CMD type
+        combination_dfs = []
+        OCs = []
 
-    # 3. Do some initial HP tuning if necessary
-    try:
-        params = OC.SVR_read_from_file(HP_file)
-    except IndexError:
-        print(f"No Hyperparameters were found for {OC.name}.")
-        curve, isochrone = OC.curve_extraction(svr_data=OC.PCA_XY, svr_weights=OC.weights,
-                                               svr_predict=OC.PCA_XY[:, 0], **kwargs)
+        # loop over grid points
+        for i in range(len(combinations))[:]:
+            print(f'{c} - CMD {typ} - combi: {i}')
 
-    # 4. Create the robust isochrone and uncertainty border from bootstrapped curves
-    n_boot = 100
-    result_df = OC.isochrone_and_intervals(n_boot=n_boot, kwargs=kwargs, output_loc=results_path)
-    combination_dfs.append(result_df)
+            row = combination_df.iloc[i].values[:4]  # set grid point values
+            cmd_data = sim_CMD.simulate(row)  # simulate CMD with the values
 
-    # 5. Interpolate the new and old isochrones and calculate the distances between the curves, sum up along the curve
-    distance = compute_NN_distance(result_df, CMD1.cax, CMD1.abs_G)
-    overall_distances.append(round(distance, 2))
+            # fig, axes = sim_CMD.plot_verification(row)
+            # plt.title(f"{c}, CMD {typ}")
+            # fig.show()
 
-# 6. print the results in the plots
-for k, df in enumerate(combination_dfs[:]):
+            OC = star_cluster(name=c, catalog=cmd_data, dataset_id=i)  # make cluster object from new CMD data
+            OC.create_CMD_quick_n_dirty(CMD_params=sim_CMD.cols[::-1], no_errors=True)  # Create CMD
 
-    fig, ax = plt.subplots(1, 1, figsize=(4, 6))
+            # Extraction routine
+            try:
+                params = OC.SVR_read_from_file(HP_file)
+            except IndexError:
+                print(f"No Hyperparameters were found for {OC.name}.")
+                curve, isochrone = OC.curve_extraction(svr_data=OC.PCA_XY, svr_weights=OC.weights,
+                                                       svr_predict=OC.PCA_XY[:, 0], **kwargs)
 
-    plt.scatter(OC.density_x, OC.density_y, **OC.kwargs_CMD, label="Pleiades")
-    plt.plot(df["m_x"], df["m_y"], color="orange", lw=2.5, label="New")
-    plt.plot(CMD1.cax, CMD1.abs_G, color="magenta", label="old")
+            n_boot = 1000
+            result_df = OC.isochrone_and_intervals(n_boot=n_boot, kwargs=kwargs, output_loc=results_path)
+            combination_dfs.append(result_df)
 
-    # Set the figure to dark mode
-    fig.patch.set_facecolor('black')
-    ax.set_facecolor('black')
-    ax.xaxis.label.set_color('white')
-    ax.yaxis.label.set_color('white')
-    ax.tick_params(axis='x', colors='white')
-    ax.tick_params(axis='y', colors='white')
-    ax.spines['left'].set_color('white')
-    ax.spines['bottom'].set_color('white')
+            # Interpolate the new and old isochrones and calculate the NN distance sum
+            distance = compute_NN_distance(result_df, sim_CMD.cax, sim_CMD.abs_G)
+            combination_df.loc[i, f"CMD_{typ}"] = round(distance, 2)  # store distance in grid dataframe
+            OCs.append(OC)  # save cluster object for plotting
 
-    # axes
-    ax.set_ylabel(r"M$_{\mathrm{G}}$ (mag)", labelpad=1, color="white")
-    ax.set_xlabel(r"$\mathrm{G}_{\mathrm{BP}} - \mathrm{G}_{\mathrm{RP}}$ (mag)", labelpad=1, color="white")
-    ax.set_ylim(15, -2)
+        CMD_type_combos.append(combination_dfs)
 
-    plt.title(f"Difference = {overall_distances[k]} \n {combinations[k]}", color="white", y=1.01)
-    plt.subplots_adjust(left=0.18, right=0.98)
+        # Apply rescaling to the 'value' column
+        combination_df[f"scaled_CMD_{typ}"] = combination_df[f"CMD_{typ}"].apply(
+            lambda x: (x - combination_df[f"CMD_{typ}"].min()) / (combination_df[f"CMD_{typ}"].max() -
+                                                                  combination_df[f"CMD_{typ}"].min()))
 
-    legend = ax.legend(loc="best", edgecolor="white", facecolor="black")  # without CG
-    for text in legend.get_texts():
-        text.set_color('white')
-    plt.show()
+        # Plot
+        for k, df in enumerate(combination_dfs[:]):
 
-    if save_plot:
-        fig.savefig(output_path + f"New_isochrones_Pleiades_combo_{k}.png", dpi=300)
+            fig, ax = plt.subplots(1, 1, figsize=(4, 6))
+
+            plt.scatter(OCs[k].density_x, OCs[k].density_y, **OCs[k].kwargs_CMD, label="Pleiades")
+            plt.plot(df["m_x"], df["m_y"], color="orange", lw=2.5, label="New")
+            plt.plot(sim_CMD.cax, sim_CMD.abs_G, color="magenta", label="old")
+            # Set the figure to dark mode
+            fig.patch.set_facecolor('black')
+            ax.set_facecolor('black')
+            ax.xaxis.label.set_color('white')
+            ax.yaxis.label.set_color('white')
+            ax.tick_params(axis='x', colors='white')
+            ax.tick_params(axis='y', colors='white')
+            ax.spines['left'].set_color('white')
+            ax.spines['bottom'].set_color('white')
+            # axes
+            ax.set_xlabel(f"{sim_CMD.cols[0]}", labelpad=1, color="white")
+            ax.set_ylabel(f"{sim_CMD.cols[1]} (mag)", labelpad=1, color="white")
+            ax.set_ylim(15, -2)
+            ax.set_xlim(-0.5, 4)
+            # title
+            plt.title(
+                f"Difference = {round(combination_df.loc[k, f'scaled_CMD_{typ}'], 2)} \n {combination_df.iloc[k].values[:4]}",
+                color="white", y=1.01)
+            plt.subplots_adjust(left=0.18, right=0.98)
+            # legend
+            legend = ax.legend(loc="best", edgecolor="white", facecolor="black")
+            for text in legend.get_texts():
+                text.set_color('white')
+
+            if save_plot:
+                fig.savefig(output_path + f"{c}_CMD_{typ}_gp_{k}_plx_{combination_df.iloc[k].values[0]}_bin_"
+                                          f"{combination_df.iloc[k].values[1]}_ext_{combination_df.iloc[k].values[2]}_"
+                                          f"field_{combination_df.iloc[k].values[3]}.png", dpi=300)
+
+            plt.close()
+
+    all_dfs.append(combination_df)
+
+    fig, stats = anova_analysis(cluster_name=c, df=combination_df, color_palette=palette_3, output_path=output_path)
+
+    fig.show()
+
+
+
+
+'''
+# Plot the results
+fig, ax = plt.subplots(nrows=3, ncols=4, figsize=(15, 15))
+
+for i_row, c in enumerate(clusters[:1]):
+
+    for i_col, param in enumerate(["u_plx", "f_binaries", "extinction", "f_field"]):
+        # Group by "extinction" and calculate the mean of "CMD1" for each group
+        # averaged_1 = all_dfs[i_row].groupby(param)['scaled_CMD_1']#.mean()
+        # averaged_2 = all_dfs[i_row].groupby(param)['scaled_CMD_2']#.mean()
+        # averaged_3 = all_dfs[i_row].groupby(param)['scaled_CMD_3']#.mean()
+
+        group_data = all_dfs[i_row].groupby(param)['scaled_CMD_1']
+        for group in group_data:
+            ax[i_row][i_col].boxplot(group, posix=group.index)
+
+        # ax[i_row][i_col].plot(averaged_1.index, averaged_1.values, label="BP-RP")
+        # ax[i_row][i_col].plot(averaged_2.index, averaged_2.values, label="BP-G")
+        # ax[i_row][i_col].plot(averaged_3.index, averaged_3.values, label="G-RP")
+        # ax[i_row][i_col].set_xlabel(param)
+        ax[i_row][i_col].set_ylabel('Difference btw curves')
+        ax[i_row][i_col].set_ylim(0, 1)
+        ax[i_row][1].set_title(c)
+
+    plt.legend(loc="best")
+
+plt.tight_layout()
+
+# plt.savefig(output_path + "All_parameter_variations.png", dpi=300)
+
+plt.show()
+'''
 
 print("Routine executed sucessfully.")

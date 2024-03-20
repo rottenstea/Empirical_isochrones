@@ -1,7 +1,9 @@
 from scipy.integrate import simps
 from scipy.interpolate import interp1d
 import numpy as np
-
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.neighbors import NearestNeighbors
 
 
@@ -42,10 +44,8 @@ def interpolate_single_isochrone(color, abs_mag, nb_interpolated):
 
 
 def compute_NN_distance(df_new, old_x, old_y):
-
-    interp_points_new = interpolate_single_isochrone(df_new["m_x"], df_new["m_y"], 10000)
+    interp_points_new = interpolate_single_isochrone(df_new["m_x"], df_new["m_y"], 100000)
     interp_points_original = interpolate_single_isochrone(old_x, old_y, 100)
-
     # fig_test = plt.figure()
     # plt.scatter(interp_points_new[:, 0], interp_points_new[:, 1], label="new")
     # plt.scatter(interp_points_original[:, 0], interp_points_original[:, 1], label="original")
@@ -85,3 +85,75 @@ def compute_areas(df_new, x_old, y_old):
     print("Area between curves:", area_between_curves)
 
     return area_between_curves
+
+
+# function to plot the results as box-line and return df of the medians
+def anova_analysis(cluster_name, df, color_palette="Blues", output_path=None):
+    stats_df = pd.DataFrame(columns=["Cluster", "variable", "CMD_type", "value"])
+    df = df.drop(0)
+    # Define the columns to keep as identifiers
+    id_vars = ['u_plx', 'f_binaries', 'extinction', 'f_field']
+
+    # Melt the DataFrame to combine CMD_1, CMD_2, CMD_3 into a single column "CMD"
+    melted_df = pd.melt(df, id_vars=id_vars, value_vars=['scaled_CMD_1', 'scaled_CMD_2', 'scaled_CMD_3'],
+                        var_name="CMD_type", value_name="Diff")
+
+    # Extract CMD_type number from 'CMD_type'
+    melted_df['CMD_type'] = melted_df['CMD_type'].str.extract(r'(\d+)').astype(int)
+    # Define the mapping dictionary
+    cmd_mapping = {1: 'BP-RP', 2: 'BP-G', 3: 'G-RP'}
+    # Map the numeric values to their corresponding string representations
+    melted_df['CMD_type'] = melted_df['CMD_type'].map(cmd_mapping)
+
+    fig, ax = plt.subplots(2, 4, figsize=(7.58, 5.5), sharey=True)
+
+    axes = ax.ravel()
+
+    df_id = 0
+    for i, var in enumerate(id_vars):
+
+        # Group the DataFrame by the f_field column
+        grouped_df = melted_df.groupby(var)
+
+        # Combine the data for all groups
+        combined_data = pd.concat([grouped_df.get_group(val) for val in grouped_df.groups])
+
+        if i != 3:
+            # boxplot
+            sns.boxplot(data=combined_data, x=var, y="Diff", hue="CMD_type", palette=color_palette, legend=False,
+                        ax=axes[i]).set(title=f'{var}', xlabel="", ylabel='Normalized difference', ylim=[-0.1, 1.1])
+            # lineplot
+            sns.lineplot(data=combined_data, x=var, y="Diff", hue="CMD_type", estimator=np.median, palette=color_palette,
+                         legend=False, ax=axes[i + 4]).set(xlabel="", ylabel='Normalized difference', ylim=[-0.1, 1.1])
+        else:
+            # boxplot
+            sns.boxplot(data=combined_data, x=var, y="Diff", hue="CMD_type", palette=color_palette, legend=True,
+                        ax=axes[i]).set(title=f'{var}', xlabel="", ylabel='Normalized difference', ylim=[-0.1, 1.1])
+            # lineplot
+            sns.lineplot(data=combined_data, x=var, y="Diff", hue="CMD_type", estimator=np.median, palette=color_palette,
+                         legend=False, ax=axes[i + 4]).set(xlabel="", ylabel='Normalized difference', ylim=[-0.1, 1.1])
+            # axes[i+4].legend(bbox_to_anchor=(1, 1))
+
+        for typ in np.unique(combined_data["CMD_type"]):
+            df_G = combined_data[combined_data["CMD_type"] == typ]["Diff"]
+            stats_df.loc[df_id, "Cluster"] = cluster_name
+            stats_df.loc[df_id, "variable"] = var
+            stats_df.loc[df_id, "CMD_type"] = typ
+            stats_df.loc[df_id, "value"] = np.median(df_G)
+
+            df_id += 1
+
+    axes[1].set_xlabel("gridpoints", x=1.1)
+    axes[5].set_xlabel("gridpoints", x=1.1)
+
+    axes[3].legend(bbox_to_anchor=(1, -0.9, 1, 1))
+    # axes[7].legend(bbox_to_anchor=(1, 1))
+
+    plt.subplots_adjust(wspace=0.15, hspace=0.3, top=0.9)
+    plt.suptitle(cluster_name.replace("_", " "))
+
+    if output_path is not None:
+        fig.savefig(output_path + f'{cluster_name}_box-line_Grid.png', dpi=300)
+        stats_df.to_csv(output_path+f'{cluster_name}_medians.csv')
+
+    return fig, stats_df
